@@ -9,6 +9,10 @@ import path from 'path';
 
 const CONTENT_DIR = process.env.CONTENT_DIR || '/data/repos';
 
+function sanitizeSlug(slug: string): string {
+  return slug.replace(/[^a-zA-Z0-9_-]/g, '');
+}
+
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
   const campaignId = searchParams.get('campaignId');
@@ -78,10 +82,11 @@ export async function POST(request: Request) {
     await requireAdmin();
     const body = await request.json();
 
+    const slug = sanitizeSlug(body.slug);
     db.insert(sessionNotes)
       .values({
         campaignId: body.campaignId,
-        slug: body.slug,
+        slug,
         title: body.title,
         contentMd: body.contentMd,
         authorId: body.authorId || null,
@@ -96,8 +101,8 @@ export async function POST(request: Request) {
     );
     if (!existsSync(repoDir)) await mkdir(repoDir, { recursive: true });
     await writeFile(
-      path.join(repoDir, `${body.slug}.md`),
-      `---\ntitle: ${body.title}\nis_dm_only: ${!!body.isDmOnly}\nslug: ${body.slug}\n---\n\n${body.contentMd}`,
+      path.join(repoDir, `${slug}.md`),
+      `---\ntitle: ${body.title}\nis_dm_only: ${!!body.isDmOnly}\nslug: ${slug}\n---\n\n${body.contentMd}`,
     );
 
     return NextResponse.json(
@@ -135,8 +140,9 @@ export async function PUT(request: Request) {
         'session-notes',
       );
       if (!existsSync(repoDir)) await mkdir(repoDir, { recursive: true });
+      const safeSlug = sanitizeSlug(note.slug);
       await writeFile(
-        path.join(repoDir, `${note.slug}.md`),
+        path.join(repoDir, `${safeSlug}.md`),
         `---\ntitle: ${body.title}\nis_dm_only: ${!!body.isDmOnly}\nslug: ${note.slug}\n---\n\n${body.contentMd}`,
       );
     }
