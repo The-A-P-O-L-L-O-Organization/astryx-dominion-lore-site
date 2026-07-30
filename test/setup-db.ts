@@ -1,11 +1,11 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest'
-import Database from 'better-sqlite3'
-import { drizzle } from 'drizzle-orm/better-sqlite3'
-import * as schema from '@/lib/db/schema'
+import { describe, it, expect, vi, beforeEach } from 'vitest';
+import Database from 'better-sqlite3';
+import { drizzle } from 'drizzle-orm/better-sqlite3';
+import * as schema from '@/lib/db/schema';
 
 // Build in-memory DB matching the real schema
 function createTestDb() {
-  const sqlite = new Database(':memory:')
+  const sqlite = new Database(':memory:');
   sqlite.exec(`
     CREATE TABLE users (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -78,41 +78,54 @@ function createTestDb() {
       updated_at TEXT NOT NULL DEFAULT (datetime('now')),
       UNIQUE(campaign_id, slug)
     );
-  `)
-  return drizzle(sqlite)
+  `);
+  return drizzle(sqlite);
 }
 
 // Mock the auth module with a controllable session
 function setupAuthMocks(overrides: {
-  userId?: number
-  role?: string
-  isAuthenticated?: boolean
-  isAdmin?: boolean
+  userId?: number;
+  role?: string;
+  isAuthenticated?: boolean;
+  isAdmin?: boolean;
 }) {
-  const { userId = 1, role = 'player', isAuthenticated = true, isAdmin = false } = overrides
-  const user = { id: userId, username: 'testuser', role, passwordHash: '', createdAt: '' }
-  const session = isAuthenticated ? { user } : null
+  const {
+    userId = 1,
+    role = 'player',
+    isAuthenticated = true,
+    isAdmin = false,
+  } = overrides;
+  const user = {
+    id: userId,
+    username: 'testuser',
+    role,
+    passwordHash: '',
+    createdAt: '',
+  };
+  const session = isAuthenticated ? { user } : null;
 
   vi.mock('@/lib/auth', () => ({
     hashPassword: vi.fn((p: string) => Promise.resolve(`hashed:${p}`)),
-    verifyPassword: vi.fn((p: string, h: string) => Promise.resolve(h === `hashed:${p}`)),
+    verifyPassword: vi.fn((p: string, h: string) =>
+      Promise.resolve(h === `hashed:${p}`),
+    ),
     createSession: vi.fn(() => Promise.resolve('mock-session-id')),
     getSession: vi.fn(() => Promise.resolve(session)),
     destroySession: vi.fn(() => Promise.resolve()),
     requireAuth: vi.fn(() => {
-      if (!isAuthenticated) throw new Error('Unauthorized')
-      return Promise.resolve(session)
+      if (!isAuthenticated) throw new Error('Unauthorized');
+      return Promise.resolve(session);
     }),
     requireAdmin: vi.fn(() => {
-      if (!isAuthenticated) throw new Error('Unauthorized')
-      if (!isAdmin) throw new Error('Forbidden')
-      return Promise.resolve(user)
+      if (!isAuthenticated) throw new Error('Unauthorized');
+      if (!isAdmin) throw new Error('Forbidden');
+      return Promise.resolve(user);
     }),
-  }))
+  }));
 }
 
 export function cleanupMocks() {
-  vi.restoreAllMocks()
+  vi.restoreAllMocks();
 }
 
-export { createTestDb, setupAuthMocks }
+export { createTestDb, setupAuthMocks };
