@@ -13,6 +13,12 @@ import remarkRehype from 'remark-rehype'
 import rehypeRaw from 'rehype-raw'
 import rehypeStringify from 'rehype-stringify'
 
+const processor = remark()
+  .use(remarkGfm)
+  .use(remarkRehype, { allowDangerousHtml: true })
+  .use(rehypeRaw)
+  .use(rehypeStringify)
+
 export default async function SessionNotePage({ params }: { params: Promise<{ characterId: string; slug: string }> }) {
   const { characterId, slug } = await params
   const characterIdNum = Number(characterId)
@@ -31,12 +37,6 @@ export default async function SessionNotePage({ params }: { params: Promise<{ ch
 
   if (!note) notFound()
   if (note.isDmOnly && session.user.role !== 'admin') notFound()
-
-  const processor = remark()
-    .use(remarkGfm)
-    .use(remarkRehype, { allowDangerousHtml: true })
-    .use(rehypeRaw)
-    .use(rehypeStringify)
 
   const html = String(processor.processSync(note.contentMd))
 
