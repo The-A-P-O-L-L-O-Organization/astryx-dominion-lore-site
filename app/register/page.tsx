@@ -26,15 +26,19 @@ export default function RegisterPage() {
     setError('');
     setSuccess('');
     if (password !== confirm) return setError('Passwords do not match');
-    const res = await fetch('/api/auth/register', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ username, password }),
-    });
-    const data = await res.json();
-    if (!res.ok) return setError(data.error || 'Registration failed');
-    setSuccess('Account created! Redirecting to login...');
-    setTimeout(() => router.push('/login'), 1500);
+    try {
+      const res = await fetch('/api/auth/register', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username, password }),
+      });
+      const data = await res.json();
+      if (!res.ok) return setError(data.error || 'Registration failed');
+      setSuccess('Account created! Redirecting to login...');
+      setTimeout(() => router.push('/login'), 1500);
+    } catch {
+      return setError('Network error — please try again');
+    }
   }
 
   return (

@@ -48,14 +48,18 @@ export function CharacterList({
   async function handleCreate(e: FormEvent) {
     e.preventDefault();
     setError('');
-    const res = await fetch('/api/characters', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ name, info, campaignId: Number(campaignId) }),
-    });
-    const data = await res.json();
-    if (!res.ok) return setError(data.error || 'Failed to create');
-    setShowCreate(false);
+    try {
+      const res = await fetch('/api/characters', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name, info, campaignId: Number(campaignId) }),
+      });
+      const data = await res.json();
+      if (!res.ok) return setError(data.error || 'Failed to create');
+      setShowCreate(false);
+    } catch {
+      return setError('Network error — please try again');
+    }
     setName('');
     setInfo('');
     setCampaignId('');
