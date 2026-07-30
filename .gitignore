@@ -3,3 +3,5 @@ node_modules/
 *.db
 .env
 content/
+data/
+package-lock.json
