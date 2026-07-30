@@ -7,7 +7,12 @@
     "build": "next build",
     "start": "next start",
     "db:generate": "drizzle-kit generate",
-    "db:migrate": "tsx lib/db/migrate.ts"
+    "db:migrate": "tsx lib/db/migrate.ts",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "lint": "eslint ."
   },
   "dependencies": {
     "@radix-ui/react-dialog": "^1.1.23",
@@ -21,9 +26,9 @@
     "drizzle-orm": "^0.33.0",
     "gray-matter": "^4.0.3",
     "lucide-react": "^0.400.0",
-    "next": "^14.2.0",
-    "react": "^18.3.0",
-    "react-dom": "^18.3.0",
+    "next": "^16.2.12",
+    "react": "^19.2.8",
+    "react-dom": "^19.2.8",
     "react-markdown": "^9.0.0",
     "rehype-raw": "^7.0.0",
     "remark-gfm": "^4.0.0",
@@ -34,18 +39,31 @@
   },
   "packageManager": "pnpm@11.0.9",
   "pnpm": {
-    "onlyBuiltDependencies": ["better-sqlite3", "esbuild"]
+    "onlyBuiltDependencies": [
+      "better-sqlite3",
+      "esbuild",
+      "sharp",
+      "unrs-resolver"
+    ]
   },
   "devDependencies": {
+    "@eslint/eslintrc": "^3.3.6",
+    "@testing-library/jest-dom": "^7.0.0",
+    "@testing-library/react": "^16.3.2",
     "@types/bcryptjs": "^2.4.0",
     "@types/better-sqlite3": "^7.6.0",
     "@types/node": "^20.12.0",
-    "@types/react": "^18.3.0",
-    "@types/react-dom": "^18.3.0",
+    "@types/react": "^19.0.0",
+    "@types/react-dom": "^19.0.0",
     "autoprefixer": "^10.4.0",
     "drizzle-kit": "^0.24.0",
+    "eslint": "^10.8.0",
+    "eslint-config-next": "^16.2.12",
+    "jsdom": "^30.0.1",
     "postcss": "^8.4.0",
+    "prettier": "^3.9.6",
     "tsx": "^4.7.0",
-    "typescript": "^5.4.0"
+    "typescript": "^5.4.0",
+    "vitest": "^4.1.10"
   }
 }

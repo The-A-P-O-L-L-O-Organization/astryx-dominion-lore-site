@@ -1,4 +1,4 @@
-import { sqliteTable, text, integer } from 'drizzle-orm/sqlite-core'
+import { sqliteTable, text, integer, unique } from 'drizzle-orm/sqlite-core'
 
 export const users = sqliteTable('users', {
   id: integer('id').primaryKey({ autoIncrement: true }),
@@ -40,7 +40,9 @@ export const pageVisibility = sqliteTable('page_visibility', {
   campaignId: integer('campaign_id').notNull().references(() => campaigns.id),
   pagePath: text('page_path').notNull(),
   isHidden: integer('is_hidden', { mode: 'boolean' }).notNull().default(true),
-})
+}, (t) => ({
+  unq: unique().on(t.campaignId, t.pagePath),
+}))
 
 export const sectionVisibility = sqliteTable('section_visibility', {
   id: integer('id').primaryKey({ autoIncrement: true }),
@@ -48,7 +50,9 @@ export const sectionVisibility = sqliteTable('section_visibility', {
   pagePath: text('page_path').notNull(),
   sectionId: text('section_id').notNull(),
   isHidden: integer('is_hidden', { mode: 'boolean' }).notNull().default(true),
-})
+}, (t) => ({
+  unq: unique().on(t.campaignId, t.pagePath, t.sectionId),
+}))
 
 export const contentCache = sqliteTable('content_cache', {
   id: integer('id').primaryKey({ autoIncrement: true }),
@@ -59,7 +63,9 @@ export const contentCache = sqliteTable('content_cache', {
   frontmatter: text('frontmatter').notNull().default('{}'),
   planetData: text('planet_data'),
   updatedAt: text('updated_at').notNull().default("datetime('now')"),
-})
+}, (t) => ({
+  unq: unique().on(t.campaignId, t.pagePath),
+}))
 
 export const sessionNotes = sqliteTable('session_notes', {
   id: integer('id').primaryKey({ autoIncrement: true }),
@@ -72,4 +78,6 @@ export const sessionNotes = sqliteTable('session_notes', {
   isDmOnly: integer('is_dm_only', { mode: 'boolean' }).notNull().default(false),
   createdAt: text('created_at').notNull().default("datetime('now')"),
   updatedAt: text('updated_at').notNull().default("datetime('now')"),
-})
+}, (t) => ({
+  unq: unique().on(t.campaignId, t.slug),
+}))
