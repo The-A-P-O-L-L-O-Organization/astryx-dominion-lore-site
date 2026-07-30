@@ -5,6 +5,7 @@ RUN apk add --no-cache git curl
 
 FROM base AS deps
 WORKDIR /app
+RUN apk add --no-cache python3 g++ make
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
 RUN pnpm install --frozen-lockfile
 
