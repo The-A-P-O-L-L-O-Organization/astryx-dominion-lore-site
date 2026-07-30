@@ -12,6 +12,7 @@ import {
 } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 type Character = {
   id: number;
@@ -127,19 +128,18 @@ export function CharacterList({
           </CardHeader>
           <CardContent>
             <form onSubmit={handleCreate} className="space-y-4">
-              <select
-                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
-                value={campaignId}
-                onChange={(e) => setCampaignId(e.target.value)}
-                required
-              >
-                <option value="">Select campaign...</option>
-                {visibleCampaigns.map((c) => (
-                  <option key={c.id} value={c.id}>
-                    {c.name} ({c.theme})
-                  </option>
-                ))}
-              </select>
+              <Select value={campaignId} onValueChange={setCampaignId}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select campaign..." />
+                </SelectTrigger>
+                <SelectContent>
+                  {visibleCampaigns.map((c) => (
+                    <SelectItem key={c.id} value={String(c.id)}>
+                      {c.name} ({c.theme})
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
               <Input
                 placeholder="Character name"
                 value={name}
