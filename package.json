@@ -64,7 +64,7 @@
     "@types/three": "^0.185.1",
     "autoprefixer": "^10.4.0",
     "drizzle-kit": "^0.24.0",
-    "eslint": "^9.39.5",
+    "eslint": "^10.8.0",
     "eslint-config-next": "^16.2.12",
     "jsdom": "^30.0.1",
     "postcss": "^8.4.0",
