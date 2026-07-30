@@ -1,0 +1,12 @@
+import { NextResponse } from 'next/server';
+import { pollAllCampaigns } from '@/lib/content/poller';
+
+export async function GET() {
+  try {
+    await pollAllCampaigns();
+    return NextResponse.json({ message: 'Content polled successfully' });
+  } catch (err) {
+    console.error('Poll error:', err);
+    return NextResponse.json({ error: 'Poll failed' }, { status: 500 });
+  }
+}
