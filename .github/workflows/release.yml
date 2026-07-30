@@ -42,31 +42,9 @@ jobs:
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
 
-      - name: Generate release notes
-        id: changelog
-        uses: mikepenz/release-changelog-builder-action@v5
-        with:
-          token: ${{ secrets.GITHUB_TOKEN }}
-          toTag: ${{ github.ref_name }}
-          configurationJson: |
-            {
-              "template": "#{{CHANGELOG}}$NEWLINE$NEWLINE## What's Changed$NEWLINE{{CHANGELOG}}$NEWLINE$NEWLINE**Full changelog**: {{RELEASELINK}}",
-              "categories": [
-                {"title": "## Features", "labels": ["feat"]},
-                {"title": "## Bug Fixes", "labels": ["fix"]},
-                {"title": "## Documentation", "labels": ["docs"]},
-                {"title": "## Maintenance", "labels": ["chore", "ci", "refactor", "test"]}
-              ],
-              "label_extractor": [
-                {"pattern": "(\\w+)(?:\\(.+\\))?!?:\\s.*", "target": "$1"}
-              ],
-              "duplicate_filter": true
-            }
-
       - name: Create Release
         uses: softprops/action-gh-release@v2
         with:
           name: ${{ github.ref_name }}
           tag_name: ${{ github.ref_name }}
-          body: ${{ steps.changelog.outputs.changelog }}
-          generate_release_notes: false
+          generate_release_notes: true
