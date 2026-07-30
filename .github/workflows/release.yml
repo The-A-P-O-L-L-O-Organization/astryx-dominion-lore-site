@@ -52,10 +52,10 @@ jobs:
             {
               "template": "#{{CHANGELOG}}$NEWLINE$NEWLINE## What's Changed$NEWLINE{{CHANGELOG}}$NEWLINE$NEWLINE**Full changelog**: {{RELEASELINK}}",
               "categories": [
-                {"title": "## 🚀 Features", "labels": ["feat"]},
-                {"title": "## 🐛 Bug Fixes", "labels": ["fix"]},
-                {"title": "## 📚 Documentation", "labels": ["docs"]},
-                {"title": "## 🧰 Maintenance", "labels": ["chore", "ci", "refactor", "test"]}
+                {"title": "## Features", "labels": ["feat"]},
+                {"title": "## Bug Fixes", "labels": ["fix"]},
+                {"title": "## Documentation", "labels": ["docs"]},
+                {"title": "## Maintenance", "labels": ["chore", "ci", "refactor", "test"]}
               ],
               "label_extractor": [
                 {"pattern": "(\\w+)(?:\\(.+\\))?!?:\\s.*", "target": "$1"}
