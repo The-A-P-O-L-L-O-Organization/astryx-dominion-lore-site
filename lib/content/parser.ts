@@ -31,7 +31,7 @@ export function parseMarkdownFile(filePath: string, content: string): ParsedPage
 
   const sectionIds: string[] = []
   const headingRegex = /<h([1-6])[^>]*id="([^"]+)"[^>]*>/gi
-  let match
+  let match: RegExpExecArray | null
   while ((match = headingRegex.exec(htmlRendered)) !== null) {
     sectionIds.push(match[2])
   }
