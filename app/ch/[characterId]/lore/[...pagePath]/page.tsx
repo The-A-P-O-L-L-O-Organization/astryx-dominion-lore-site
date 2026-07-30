@@ -9,10 +9,12 @@ import { getPageVisibility, getHiddenSectionIds } from '@/lib/content/visibility
 
 export default async function LorePage({ params }: { params: Promise<{ characterId: string; pagePath: string[] }> }) {
   const { characterId, pagePath } = await params
+  const characterIdNum = Number(characterId)
+  if (isNaN(characterIdNum)) notFound()
   const session = await getSession()
   if (!session) redirect('/login')
 
-  const character = db.select().from(characters).where(eq(characters.id, Number(characterId))).get()
+  const character = db.select().from(characters).where(eq(characters.id, characterIdNum)).get()
   if (!character || character.userId !== session.user.id) notFound()
   if (!character.isApproved) notFound()
 

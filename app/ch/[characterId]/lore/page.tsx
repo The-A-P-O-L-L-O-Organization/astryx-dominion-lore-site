@@ -8,10 +8,12 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 
 export default async function LoreIndexPage({ params }: { params: Promise<{ characterId: string }> }) {
   const { characterId } = await params
+  const characterIdNum = Number(characterId)
+  if (isNaN(characterIdNum)) notFound()
   const session = await getSession()
   if (!session) redirect('/login')
 
-  const character = db.select().from(characters).where(eq(characters.id, Number(characterId))).get()
+  const character = db.select().from(characters).where(eq(characters.id, characterIdNum)).get()
   if (!character || character.userId !== session.user.id) notFound()
   if (!character.isApproved) notFound()
 

@@ -37,7 +37,7 @@ export function LoreSidebar({ items, characterId, campaignName }: { items: NavIt
         <h2 className="text-lg font-bold">{campaignName}</h2>
         <p className="text-xs text-muted-foreground">Lore Index</p>
       </div>
-      <nav className="space-y-1">
+      <nav aria-label="Lore sections" className="space-y-1">
         {groups.map(group => (
           <SidebarGroup key={group.category} group={group} characterId={characterId} currentPath={pathname} />
         ))}
@@ -54,6 +54,7 @@ function SidebarGroup({ group, characterId, currentPath }: { group: NavGroup; ch
         variant="ghost"
         size="sm"
         onClick={() => setExpanded(!expanded)}
+        aria-expanded={expanded}
         className="w-full justify-start gap-1 font-medium"
       >
         {expanded ? <ChevronDown className="h-3 w-3" /> : <ChevronRight className="h-3 w-3" />}
