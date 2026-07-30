@@ -82,10 +82,18 @@ export async function POST(request: Request) {
     await requireAdmin();
     const body = await request.json();
 
+    const campaignIdNum = Number(body.campaignId);
+    if (isNaN(campaignIdNum)) {
+      return NextResponse.json(
+        { error: 'Invalid campaign ID' },
+        { status: 400 },
+      );
+    }
+
     const slug = sanitizeSlug(body.slug);
     db.insert(sessionNotes)
       .values({
-        campaignId: body.campaignId,
+        campaignId: campaignIdNum,
         slug,
         title: body.title,
         contentMd: body.contentMd,
@@ -96,7 +104,7 @@ export async function POST(request: Request) {
 
     const repoDir = path.join(
       CONTENT_DIR,
-      String(body.campaignId),
+      String(campaignIdNum),
       'session-notes',
     );
     if (!existsSync(repoDir)) await mkdir(repoDir, { recursive: true });
