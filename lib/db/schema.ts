@@ -5,8 +5,7 @@ export const users = sqliteTable('users', {
   username: text('username').unique().notNull(),
   passwordHash: text('password_hash').notNull(),
   role: text('role').notNull().default('player'),
-  approved: integer('approved', { mode: 'boolean' }).notNull().default(false),
-  createdAt: text('created_at').notNull().default('datetime(\'now\')'),
+  createdAt: text('created_at').notNull().default("datetime('now')"),
 })
 
 export const sessions = sqliteTable('sessions', {
@@ -15,9 +14,62 @@ export const sessions = sqliteTable('sessions', {
   expiresAt: text('expires_at').notNull(),
 })
 
-export const pageOverrides = sqliteTable('page_overrides', {
+export const campaigns = sqliteTable('campaigns', {
   id: integer('id').primaryKey({ autoIncrement: true }),
-  pageSlug: text('page_slug').unique().notNull(),
-  visibility: text('visibility').notNull().default('hidden'),
-  updatedAt: text('updated_at').notNull().default('datetime(\'now\')'),
+  name: text('name').notNull(),
+  description: text('description').notNull().default(''),
+  loreRepoUrl: text('lore_repo_url').notNull(),
+  theme: text('theme').notNull().default('sci-fi'),
+  isHidden: integer('is_hidden', { mode: 'boolean' }).notNull().default(false),
+  starMapConfig: text('star_map_config').notNull().default('{}'),
+  createdAt: text('created_at').notNull().default("datetime('now')"),
+})
+
+export const characters = sqliteTable('characters', {
+  id: integer('id').primaryKey({ autoIncrement: true }),
+  userId: integer('user_id').notNull().references(() => users.id),
+  campaignId: integer('campaign_id').notNull().references(() => campaigns.id),
+  name: text('name').notNull(),
+  info: text('info').notNull().default(''),
+  isApproved: integer('is_approved', { mode: 'boolean' }).notNull().default(false),
+  createdAt: text('created_at').notNull().default("datetime('now')"),
+})
+
+export const pageVisibility = sqliteTable('page_visibility', {
+  id: integer('id').primaryKey({ autoIncrement: true }),
+  campaignId: integer('campaign_id').notNull().references(() => campaigns.id),
+  pagePath: text('page_path').notNull(),
+  isHidden: integer('is_hidden', { mode: 'boolean' }).notNull().default(true),
+})
+
+export const sectionVisibility = sqliteTable('section_visibility', {
+  id: integer('id').primaryKey({ autoIncrement: true }),
+  campaignId: integer('campaign_id').notNull().references(() => campaigns.id),
+  pagePath: text('page_path').notNull(),
+  sectionId: text('section_id').notNull(),
+  isHidden: integer('is_hidden', { mode: 'boolean' }).notNull().default(true),
+})
+
+export const contentCache = sqliteTable('content_cache', {
+  id: integer('id').primaryKey({ autoIncrement: true }),
+  campaignId: integer('campaign_id').notNull().references(() => campaigns.id),
+  pagePath: text('page_path').notNull(),
+  markdownRaw: text('markdown_raw').notNull(),
+  htmlRendered: text('html_rendered').notNull(),
+  frontmatter: text('frontmatter').notNull().default('{}'),
+  planetData: text('planet_data'),
+  updatedAt: text('updated_at').notNull().default("datetime('now')"),
+})
+
+export const sessionNotes = sqliteTable('session_notes', {
+  id: integer('id').primaryKey({ autoIncrement: true }),
+  campaignId: integer('campaign_id').notNull().references(() => campaigns.id),
+  slug: text('slug').notNull(),
+  title: text('title').notNull(),
+  contentMd: text('content_md').notNull(),
+  authorId: integer('author_id').references(() => users.id),
+  source: text('source').notNull().default('in-app'),
+  isDmOnly: integer('is_dm_only', { mode: 'boolean' }).notNull().default(false),
+  createdAt: text('created_at').notNull().default("datetime('now')"),
+  updatedAt: text('updated_at').notNull().default("datetime('now')"),
 })

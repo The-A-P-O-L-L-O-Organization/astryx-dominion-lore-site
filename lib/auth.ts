@@ -6,7 +6,7 @@ import { cookies } from 'next/headers'
 
 const SALT_ROUNDS = 10
 const SESSION_COOKIE = 'session_id'
-const SESSION_MAX_AGE_MS = 7 * 24 * 60 * 60 * 1000 // 7 days
+const SESSION_MAX_AGE_MS = 7 * 24 * 60 * 60 * 1000
 
 export async function hashPassword(password: string): Promise<string> {
   return bcrypt.hash(password, SALT_ROUNDS)
@@ -16,7 +16,7 @@ export async function verifyPassword(password: string, hash: string): Promise<bo
   return bcrypt.compare(password, hash)
 }
 
-export function generateSessionId(): string {
+function generateSessionId(): string {
   const bytes = new Uint8Array(32)
   crypto.getRandomValues(bytes)
   return Array.from(bytes).map(b => b.toString(16).padStart(2, '0')).join('')
@@ -51,9 +51,7 @@ export async function getSession(): Promise<{ user: typeof users.$inferSelect } 
 
   const session = db.select().from(sessions).where(eq(sessions.id, sessionId)).get()
   if (!session || new Date(session.expiresAt) < new Date()) {
-    if (session) {
-      db.delete(sessions).where(eq(sessions.id, sessionId)).run()
-    }
+    if (session) db.delete(sessions).where(eq(sessions.id, sessionId)).run()
     return null
   }
 
@@ -72,10 +70,14 @@ export async function destroySession(): Promise<void> {
   cookieStore.delete(SESSION_COOKIE)
 }
 
-export async function requireAdmin(): Promise<typeof users.$inferSelect> {
+export async function requireAuth(): Promise<{ user: typeof users.$inferSelect }> {
   const session = await getSession()
-  if (!session || session.user.role !== 'admin') {
-    throw new Error('Unauthorized')
-  }
+  if (!session) throw new Error('Unauthorized')
+  return session
+}
+
+export async function requireAdmin(): Promise<typeof users.$inferSelect> {
+  const session = await requireAuth()
+  if (session.user.role !== 'admin') throw new Error('Forbidden')
   return session.user
 }

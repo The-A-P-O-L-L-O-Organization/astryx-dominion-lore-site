@@ -16,10 +16,6 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Invalid credentials' }, { status: 401 })
     }
 
-    if (!user.approved) {
-      return NextResponse.json({ error: 'Account pending approval' }, { status: 403 })
-    }
-
     await createSession(user.id)
     return NextResponse.json({ username: user.username, role: user.role })
   } catch {
