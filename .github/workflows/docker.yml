@@ -1,0 +1,30 @@
+name: Docker Build
+
+on:
+  pull_request:
+    paths:
+      - Dockerfile
+      - docker-compose.yml
+      - .dockerignore
+      - package.json
+      - pnpm-lock.yaml
+  push:
+    branches: [main]
+    paths:
+      - Dockerfile
+      - docker-compose.yml
+      - .dockerignore
+      - package.json
+      - pnpm-lock.yaml
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  docker:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - run: docker compose build
