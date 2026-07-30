@@ -1,6 +1,6 @@
 FROM node:lts-alpine AS base
 
-RUN corepack enable && corepack prepare pnpm@11.0.9 --activate
+RUN corepack enable && corepack prepare pnpm@11.18.0 --activate
 RUN apk add --no-cache git curl
 
 FROM base AS deps
