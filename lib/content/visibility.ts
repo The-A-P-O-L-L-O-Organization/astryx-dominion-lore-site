@@ -1,10 +1,11 @@
-import { db } from '@/lib/db';
+import { db as defaultDb } from '@/lib/db';
 import { pageVisibility, sectionVisibility } from '@/lib/db/schema';
 import { eq, and } from 'drizzle-orm';
 
 export function getPageVisibility(
   campaignId: number,
   pagePath: string,
+  db: any = defaultDb,
 ): boolean {
   const row = db
     .select()
@@ -23,6 +24,7 @@ export function getSectionVisibility(
   campaignId: number,
   pagePath: string,
   sectionId: string,
+  db: any = defaultDb,
 ): boolean {
   const row = db
     .select()
@@ -41,6 +43,7 @@ export function getSectionVisibility(
 export function getHiddenSectionIds(
   campaignId: number,
   pagePath: string,
+  db: any = defaultDb,
 ): string[] {
   const rows = db
     .select()
@@ -53,5 +56,5 @@ export function getHiddenSectionIds(
       ),
     )
     .all();
-  return rows.map((r) => r.sectionId);
+  return rows.map((r: any) => r.sectionId);
 }
