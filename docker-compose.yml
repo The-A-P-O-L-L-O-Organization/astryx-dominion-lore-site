@@ -1,0 +1,16 @@
+version: '3.8'
+
+services:
+  app:
+    build: .
+    ports:
+      - "3000:3000"
+    environment:
+      - DATABASE_PATH=/data/lore.db
+      - CONTENT_DIR=/data/repos
+    volumes:
+      - lore-data:/data
+    restart: unless-stopped
+
+volumes:
+  lore-data:
