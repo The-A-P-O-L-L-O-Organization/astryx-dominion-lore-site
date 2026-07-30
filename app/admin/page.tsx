@@ -1,16 +1,26 @@
-import { db } from '@/lib/db'
-import { users, campaigns, characters, contentCache, sessionNotes } from '@/lib/db/schema'
-import { eq } from 'drizzle-orm'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { db } from '@/lib/db';
+import {
+  users,
+  campaigns,
+  characters,
+  contentCache,
+  sessionNotes,
+} from '@/lib/db/schema';
+import { eq } from 'drizzle-orm';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
 export default async function AdminDashboard() {
   const stats = {
     users: db.select().from(users).all().length,
     campaigns: db.select().from(campaigns).all().length,
-    pendingCharacters: db.select().from(characters).where(eq(characters.isApproved, false)).all().length,
+    pendingCharacters: db
+      .select()
+      .from(characters)
+      .where(eq(characters.isApproved, false))
+      .all().length,
     pages: db.select().from(contentCache).all().length,
     notes: db.select().from(sessionNotes).all().length,
-  }
+  };
 
   return (
     <div>
@@ -22,13 +32,19 @@ export default async function AdminDashboard() {
           { label: 'Pending Characters', value: stats.pendingCharacters },
           { label: 'Lore Pages', value: stats.pages },
           { label: 'Session Notes', value: stats.notes },
-        ].map(s => (
+        ].map((s) => (
           <Card key={s.label}>
-            <CardHeader className="pb-2"><CardTitle className="text-sm text-muted-foreground">{s.label}</CardTitle></CardHeader>
-            <CardContent><p className="text-3xl font-bold">{s.value}</p></CardContent>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm text-muted-foreground">
+                {s.label}
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-3xl font-bold">{s.value}</p>
+            </CardContent>
           </Card>
         ))}
       </div>
     </div>
-  )
+  );
 }

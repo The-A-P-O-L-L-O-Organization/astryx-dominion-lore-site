@@ -1,4 +1,4 @@
-import type { Config } from 'drizzle-kit'
+import type { Config } from 'drizzle-kit';
 
 export default {
   schema: './lib/db/schema.ts',
@@ -7,4 +7,4 @@ export default {
   dbCredentials: {
     url: process.env.DATABASE_PATH || './data/app.db',
   },
-} satisfies Config
+} satisfies Config;

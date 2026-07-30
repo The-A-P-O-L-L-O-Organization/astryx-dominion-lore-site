@@ -10,25 +10,27 @@ export async function GET() {
 }
 
 export async function POST(request: Request) {
-  let body: any
+  let body: any;
   try {
-    body = await request.json()
+    body = await request.json();
   } catch {
-    return NextResponse.json({ error: 'Invalid JSON' }, { status: 400 })
+    return NextResponse.json({ error: 'Invalid JSON' }, { status: 400 });
   }
   try {
-    await requireAdmin()
-    db.insert(campaigns).values({
-      name: body.name,
-      description: body.description || '',
-      loreRepoUrl: body.loreRepoUrl,
-      theme: body.theme || 'sci-fi',
-      isHidden: body.isHidden || false,
-      starMapConfig: body.starMapConfig || '{}',
-    }).run()
-    return NextResponse.json({ message: 'Campaign created' }, { status: 201 })
+    await requireAdmin();
+    db.insert(campaigns)
+      .values({
+        name: body.name,
+        description: body.description || '',
+        loreRepoUrl: body.loreRepoUrl,
+        theme: body.theme || 'sci-fi',
+        isHidden: body.isHidden || false,
+        starMapConfig: body.starMapConfig || '{}',
+      })
+      .run();
+    return NextResponse.json({ message: 'Campaign created' }, { status: 201 });
   } catch (err) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 }
 

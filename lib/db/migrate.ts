@@ -1,8 +1,8 @@
-import Database from 'better-sqlite3'
+import Database from 'better-sqlite3';
 
-const dbPath = process.env.DATABASE_PATH || './data/app.db'
-const sqlite = new Database(dbPath)
-sqlite.pragma('journal_mode = WAL')
+const dbPath = process.env.DATABASE_PATH || './data/app.db';
+const sqlite = new Database(dbPath);
+sqlite.pragma('journal_mode = WAL');
 
 sqlite.exec(`
   CREATE TABLE IF NOT EXISTS users (
@@ -82,7 +82,7 @@ sqlite.exec(`
     updated_at TEXT NOT NULL DEFAULT (datetime('now')),
     UNIQUE(campaign_id, slug)
   );
-`)
+`);
 
-console.log('Database migrated successfully')
-sqlite.close()
+console.log('Database migrated successfully');
+sqlite.close();

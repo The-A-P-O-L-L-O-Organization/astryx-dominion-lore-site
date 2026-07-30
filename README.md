@@ -15,16 +15,16 @@ A lore browsing website for D&D sci-fi campaign Astryx Dominion. DMs write markd
 
 ## Tech Stack
 
-| Layer | Technology |
-|-------|-----------|
-| Framework | Next.js 16.2 (App Router) |
-| UI | shadcn/ui, Tailwind CSS 3.4, Radix primitives |
-| Database | SQLite via Drizzle ORM + better-sqlite3 |
+| Layer        | Technology                                      |
+| ------------ | ----------------------------------------------- |
+| Framework    | Next.js 16.2 (App Router)                       |
+| UI           | shadcn/ui, Tailwind CSS 3.4, Radix primitives   |
+| Database     | SQLite via Drizzle ORM + better-sqlite3         |
 | 3D Rendering | Three.js, @react-three/fiber, @react-three/drei |
-| Auth | bcryptjs + HTTP-only cookie sessions |
-| Markdown | gray-matter, remark, rehype, react-markdown |
-| Runtime | Node 26, pnpm 11 |
-| Deployment | Docker (single container with cron) |
+| Auth         | bcryptjs + HTTP-only cookie sessions            |
+| Markdown     | gray-matter, remark, rehype, react-markdown     |
+| Runtime      | Node 26, pnpm 11                                |
+| Deployment   | Docker (single container with cron)             |
 
 ## Getting Started
 
@@ -53,11 +53,11 @@ The app serves on port 3000. Data persists in the `lore-data` Docker volume. Cro
 
 Environment variables:
 
-| Variable | Default | Description |
-|----------|---------|-------------|
-| `DATABASE_PATH` | `./data/app.db` | Path to SQLite database file |
-| `CONTENT_DIR` | `./data/repos` | Directory for cloned git repos |
-| `SESSION_SECRET` | (required) | Secret for signing session cookies |
+| Variable         | Default         | Description                        |
+| ---------------- | --------------- | ---------------------------------- |
+| `DATABASE_PATH`  | `./data/app.db` | Path to SQLite database file       |
+| `CONTENT_DIR`    | `./data/repos`  | Directory for cloned git repos     |
+| `SESSION_SECRET` | (required)      | Secret for signing session cookies |
 
 ## Configuration
 
@@ -113,7 +113,7 @@ tags:
 planet_data:
   type: planet
   name: Tyron Prime
-  color: "#4a9eff"
+  color: '#4a9eff'
   orbit_radius: 3.5
   orbit_speed: 0.15
   terrain_type: rocky
@@ -121,6 +121,7 @@ planet_data:
 ```
 
 Frontmatter fields:
+
 - `title` — display title (defaults to filename)
 - `type` — content type (use `planet` for star map detection)
 - `planet_data` — object with star map properties (color, orbit_radius, terrain_type, etc.)
@@ -173,9 +174,7 @@ Configure systems in the campaign's `star_map_config`:
       }
     }
   ],
-  "hyperlanes": [
-    ["core-systems", "outer-rim"]
-  ]
+  "hyperlanes": [["core-systems", "outer-rim"]]
 }
 ```
 
@@ -206,6 +205,7 @@ Hidden sections are blurred client-side with: "This section is locked. Continue 
 Themes are defined as CSS variable blocks in `globals.css` under `[data-theme="..."]` selectors. The active theme is set on `<body>` via a client-side effect based on the campaign's `theme` field.
 
 Built-in themes:
+
 - `sci-fi` — dark theme with cyan/teal accents (default)
 - `fantasy` — light theme with warm parchment tones and rust accents
 
@@ -214,38 +214,43 @@ Add new themes by adding a `[data-theme="your-theme"]` block in `globals.css`.
 ## API Routes
 
 ### Auth
-| Route | Method | Description |
-|-------|--------|-------------|
-| `/api/auth/register` | POST | Register a new user (rate-limited) |
-| `/api/auth/login` | POST | Login with username/password |
-| `/api/auth/logout` | POST | Clear session |
-| `/api/auth/session` | GET | Get current session info |
+
+| Route                | Method | Description                        |
+| -------------------- | ------ | ---------------------------------- |
+| `/api/auth/register` | POST   | Register a new user (rate-limited) |
+| `/api/auth/login`    | POST   | Login with username/password       |
+| `/api/auth/logout`   | POST   | Clear session                      |
+| `/api/auth/session`  | GET    | Get current session info           |
 
 ### Campaigns
-| Route | Method | Description |
-|-------|--------|-------------|
-| `/api/campaigns` | GET | List all campaigns (admin) |
-| `/api/campaigns` | POST | Create campaign (admin) |
+
+| Route            | Method | Description                |
+| ---------------- | ------ | -------------------------- |
+| `/api/campaigns` | GET    | List all campaigns (admin) |
+| `/api/campaigns` | POST   | Create campaign (admin)    |
 
 ### Characters
-| Route | Method | Description |
-|-------|--------|-------------|
-| `/api/characters` | GET | List characters for current user |
-| `/api/characters` | POST | Create character |
-| `/api/characters/:id/approve` | POST | Approve/reject character (admin) |
+
+| Route                         | Method | Description                      |
+| ----------------------------- | ------ | -------------------------------- |
+| `/api/characters`             | GET    | List characters for current user |
+| `/api/characters`             | POST   | Create character                 |
+| `/api/characters/:id/approve` | POST   | Approve/reject character (admin) |
 
 ### Content
-| Route | Method | Description |
-|-------|--------|-------------|
-| `/api/poll-content` | GET | Trigger git pull + reparse for all campaigns |
-| `/api/visibility` | GET/POST | Get/set page and section visibility (admin) |
+
+| Route               | Method   | Description                                  |
+| ------------------- | -------- | -------------------------------------------- |
+| `/api/poll-content` | GET      | Trigger git pull + reparse for all campaigns |
+| `/api/visibility`   | GET/POST | Get/set page and section visibility (admin)  |
 
 ### Sessions
-| Route | Method | Description |
-|-------|--------|-------------|
-| `/api/sessions` | GET | List session notes (filtered by role) |
-| `/api/sessions` | POST | Create or update a session note |
-| `/api/sessions/:id` | DELETE | Delete a session note |
+
+| Route               | Method | Description                           |
+| ------------------- | ------ | ------------------------------------- |
+| `/api/sessions`     | GET    | List session notes (filtered by role) |
+| `/api/sessions`     | POST   | Create or update a session note       |
+| `/api/sessions/:id` | DELETE | Delete a session note                 |
 
 ## Project Structure
 

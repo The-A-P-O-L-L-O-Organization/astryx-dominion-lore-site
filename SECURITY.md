@@ -4,10 +4,10 @@
 
 Only the latest commit on the `main` branch receives security updates. There are no release versions or LTS branches.
 
-| Version | Supported |
-|---------|-----------|
-| `main` (latest) | ✅ |
-| Older commits | ❌ |
+| Version         | Supported |
+| --------------- | --------- |
+| `main` (latest) | ✅        |
+| Older commits   | ❌        |
 
 ## Reporting a Vulnerability
 
@@ -22,6 +22,7 @@ If the vulnerability is accepted, a fix will be applied to `main` and a notice w
 ## Scope
 
 The following are in scope:
+
 - Auth bypass or session hijacking
 - SQL injection (via the API layer)
 - Arbitrary file read/write through content ingestion
@@ -29,6 +30,7 @@ The following are in scope:
 - Remote code execution
 
 The following are out of scope:
+
 - Dependency vulnerabilities already tracked by Dependabot
 - Rate limiting bypass (unless it enables account takeover)
 - Host header injection on a LAN-only deployment
