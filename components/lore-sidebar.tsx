@@ -4,6 +4,7 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { ChevronDown, ChevronRight, FileText } from 'lucide-react'
 import { useState } from 'react'
+import { Button } from '@/components/ui/button'
 
 interface NavItem {
   path: string
@@ -49,13 +50,15 @@ function SidebarGroup({ group, characterId, currentPath }: { group: NavGroup; ch
   const [expanded, setExpanded] = useState(true)
   return (
     <div>
-      <button
+      <Button
+        variant="ghost"
+        size="sm"
         onClick={() => setExpanded(!expanded)}
-        className="flex items-center gap-1 w-full text-left text-sm font-medium text-muted-foreground hover:text-foreground py-1"
+        className="w-full justify-start gap-1 font-medium"
       >
         {expanded ? <ChevronDown className="h-3 w-3" /> : <ChevronRight className="h-3 w-3" />}
         {group.category}
-      </button>
+      </Button>
       {expanded && (
         <div className="ml-4 space-y-0.5">
           {group.items.map(item => {
