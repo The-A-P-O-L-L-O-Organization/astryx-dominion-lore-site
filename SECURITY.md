@@ -2,22 +2,29 @@
 
 ## Supported Versions
 
-Only the latest commit on the `main` branch receives security updates. There are no release versions or LTS branches.
+Only the latest commit on the `main` branch receives security updates. [GitHub Releases](https://github.com/The-A-P-O-L-L-O-Organization/astryx-dominion-lore-site/releases) are published for convenience but are point-in-time snapshots of `main`; they do not receive separate backported fixes. There are no LTS branches.
 
 | Version         | Supported |
 | --------------- | --------- |
 | `main` (latest) | ✅        |
+| GitHub releases | ❌        |
 | Older commits   | ❌        |
 
 ## Reporting a Vulnerability
 
-This project uses several dependencies that may introduce vulnerabilities. If you discover a security issue:
+Please **do not open a public issue** for security problems. Instead, use one of these private channels:
 
-1. **Do not open a public issue.** Instead, email the repository owner directly or use GitHub's private vulnerability reporting if enabled.
-2. Include a description of the vulnerability, steps to reproduce, and a suggested fix if possible.
-3. You should receive a response within 7 days.
+- **Preferred:** GitHub's private vulnerability reporting (https://github.com/The-A-P-O-L-L-O-Organization/astryx-dominion-lore-site/security/advisories/new)
+- **Fallback:** Email the maintainer directly at mgs008@outlook.com, or open a private security advisory.
 
-If the vulnerability is accepted, a fix will be applied to `main` and a notice will be added to the commit message. If declined, an explanation will be provided.
+When reporting, include:
+
+1. A description of the vulnerability and the affected component/route
+2. Steps to reproduce (with a minimal example if possible)
+3. The impact you believe it has
+4. A suggested fix, if you have one
+
+You should receive an acknowledgement within 48 hours and a full response within 7 days. If the report is accepted, a fix will be applied to `main` and a GitHub Security Advisory will be published after a coordinated release. If declined, you will receive an explanation of why.
 
 ## Scope
 
@@ -36,9 +43,11 @@ The following are out of scope:
 - Host header injection on a LAN-only deployment
 - Missing HTTPS (LAN-only deployment is by design)
 
-## Dependencies
+## Security Tooling
 
-This project uses Dependabot for automated dependency scanning on GitHub. Review Dependabot alerts for known vulnerabilities in direct and transitive dependencies.
+- **Dependabot** automatically scans direct and transitive dependencies for known vulnerabilities (both on the `main` branch and in the `ghcr.io/the-a-p-o-l-l-o-organization/astryx-dominion-lore-site` Docker image).
+- **CodeQL** code scanning runs on every push and pull request to catch SQL injection, cross-site scripting, path traversal, and other Common Weakness Enumerations (CWEs) in the source.
+- Alerts from both tools are visible in the repository's **Security** tab. Review them and address any new findings promptly.
 
 ## Deployment Considerations
 

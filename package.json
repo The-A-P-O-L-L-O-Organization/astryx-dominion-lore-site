@@ -1,6 +1,7 @@
 {
   "name": "astryx-dominion-lore-site",
   "version": "1.0.0",
+  "license": "AGPL-3.0-only",
   "author": {
     "name": "Mitchell Sehenuk",
     "email": "mgs008@outlook.com",
