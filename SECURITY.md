@@ -2,13 +2,14 @@
 
 ## Supported Versions
 
-Only the latest commit on the `main` branch receives security updates. [GitHub Releases](https://github.com/The-A-P-O-L-L-O-Organization/astryx-dominion-lore-site/releases) are published for convenience but are point-in-time snapshots of `main`; they do not receive separate backported fixes. There are no LTS branches.
+The latest release, along with the latest commit on the `main` branch, receives security updates. [GitHub Releases](https://github.com/The-A-P-O-L-L-O-Organization/astryx-dominion-lore-site/releases) are published from `main`; the latest release is supported, while older releases are not (there is no backporting to superseded versions). There are no LTS branches.
 
-| Version         | Supported |
-| --------------- | --------- |
-| `main` (latest) | ✅        |
-| GitHub releases | ❌        |
-| Older commits   | ❌        |
+| Version                 | Supported |
+| ----------------------- | --------- |
+| `main` (latest)         | ✅        |
+| Latest GitHub release   | ✅        |
+| Older releases          | ❌        |
+| Older commits           | ❌        |
 
 ## Reporting a Vulnerability
 
