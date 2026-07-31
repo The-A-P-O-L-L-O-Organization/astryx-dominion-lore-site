@@ -18,6 +18,7 @@ RUN pnpm run build
 FROM base AS runner
 WORKDIR /app
 ENV NODE_ENV=production
+ENV HOSTNAME=0.0.0.0
 ENV DATABASE_PATH=/data/lore.db
 ENV CONTENT_DIR=/data/repos
 
@@ -35,4 +36,4 @@ RUN echo "*/5 * * * * /scripts/poll-cron.sh" | crontab -
 
 EXPOSE 3000
 
-CMD ["node", "server.js"]
+CMD ["sh", "-c", "crond -b && exec node server.js"]

@@ -1,15 +1,27 @@
-version: '3.8'
-
 services:
   app:
+    image: ghcr.io/the-a-p-o-l-l-o-organization/astryx-dominion-lore-site:latest
     build: .
     ports:
       - '3000:3000'
     environment:
       - DATABASE_PATH=/data/lore.db
       - CONTENT_DIR=/data/repos
+      - POLL_SECRET=${POLL_SECRET:-}
     volumes:
       - lore-data:/data
+    healthcheck:
+      test:
+        [
+          'CMD',
+          'node',
+          '-e',
+          "fetch('http://localhost:3000/').then(r=>process.exit(r.status<500?0:1)).catch(()=>process.exit(1))",
+        ]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 20s
     restart: unless-stopped
 
 volumes:
