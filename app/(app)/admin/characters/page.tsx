@@ -26,13 +26,23 @@ export default function AdminCharactersPage() {
   const [chars, setChars] = useState<Character[]>([]);
   const router = useRouter();
 
-  async function load() {
+  async function fetchChars() {
     const res = await fetch('/api/characters');
-    setChars(await res.json());
+    return res.json();
+  }
+
+  async function load() {
+    setChars(await fetchChars());
   }
 
   useEffect(() => {
-    load();
+    let ignore = false;
+    fetchChars().then((data) => {
+      if (!ignore) setChars(data);
+    });
+    return () => {
+      ignore = true;
+    };
   }, []);
 
   async function approve(id: number, approved: boolean) {

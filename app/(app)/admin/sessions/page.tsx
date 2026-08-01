@@ -51,14 +51,24 @@ export default function AdminSessionsPage() {
       .then(setCampaigns);
   }, []);
 
-  async function loadNotes(campaignId: string) {
-    if (!campaignId) return;
+  async function fetchNotes(campaignId: string) {
+    if (!campaignId) return [];
     const res = await fetch(`/api/sessions?campaignId=${campaignId}`);
-    setNotes(await res.json());
+    return res.json();
+  }
+
+  async function loadNotes(campaignId: string) {
+    setNotes(await fetchNotes(campaignId));
   }
 
   useEffect(() => {
-    loadNotes(selectedCampaign);
+    let ignore = false;
+    fetchNotes(selectedCampaign).then((data) => {
+      if (!ignore) setNotes(data);
+    });
+    return () => {
+      ignore = true;
+    };
   }, [selectedCampaign]);
 
   async function handleSubmit(e: FormEvent) {

@@ -37,15 +37,16 @@ function OrbitingBody({
   onSelect: (path: string) => void;
 }) {
   const meshRef = useRef<THREE.Mesh>(null);
-  const angle = useRef(Math.random() * Math.PI * 2);
+  const angleRef = useRef(0);
   const speed = body.orbit_speed || 0.2;
   const radius = body.orbit_radius || 2 + index * 1.5;
 
   useFrame((_, delta) => {
     if (!meshRef.current) return;
-    angle.current += delta * speed;
-    meshRef.current.position.x = Math.cos(angle.current) * radius;
-    meshRef.current.position.z = Math.sin(angle.current) * radius;
+    if (angleRef.current === 0) angleRef.current = Math.random() * Math.PI * 2;
+    angleRef.current += delta * speed;
+    meshRef.current.position.x = Math.cos(angleRef.current) * radius;
+    meshRef.current.position.z = Math.sin(angleRef.current) * radius;
   });
 
   const size =

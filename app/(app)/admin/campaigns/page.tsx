@@ -39,13 +39,23 @@ export default function AdminCampaignsPage() {
   });
   const router = useRouter();
 
-  async function load() {
+  async function fetchCampaigns() {
     const res = await fetch('/api/campaigns');
-    setCampaigns(await res.json());
+    return res.json();
+  }
+
+  async function load() {
+    setCampaigns(await fetchCampaigns());
   }
 
   useEffect(() => {
-    load();
+    let ignore = false;
+    fetchCampaigns().then((data) => {
+      if (!ignore) setCampaigns(data);
+    });
+    return () => {
+      ignore = true;
+    };
   }, []);
 
   async function handleSubmit(e: FormEvent) {

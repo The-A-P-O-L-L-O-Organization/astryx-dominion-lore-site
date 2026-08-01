@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, use } from 'react';
+import { useEffect, useState, use, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -29,11 +29,10 @@ export default function AdminVisibilityPage({
   const [expandedPages, setExpandedPages] = useState<Set<string>>(new Set());
   const router = useRouter();
 
-  async function load() {
+  const fetchData = useCallback(async () => {
     const campRes = await fetch('/api/campaigns');
     const camps = await campRes.json();
     const camp = camps.find((c: any) => c.id === Number(campaignId));
-    setCampaignName(camp?.name || '');
 
     const visRes = await fetch(`/api/visibility?campaignId=${campaignId}`);
     const vis = await visRes.json();
@@ -46,12 +45,27 @@ export default function AdminVisibilityPage({
       const page = pageMap.get(s.pagePath);
       if (page) page.sections.push(s);
     }
-    setPages(Array.from(pageMap.values()));
+    return { name: camp?.name || '', pages: Array.from(pageMap.values()) };
+  }, [campaignId]);
+
+  async function load() {
+    const { name, pages } = await fetchData();
+    setCampaignName(name);
+    setPages(pages);
   }
 
   useEffect(() => {
-    load();
-  }, []);
+    let ignore = false;
+    fetchData().then(({ name, pages }) => {
+      if (!ignore) {
+        setCampaignName(name);
+        setPages(pages);
+      }
+    });
+    return () => {
+      ignore = true;
+    };
+  }, [fetchData]);
 
   async function togglePage(pagePath: string, currentHidden: boolean | number) {
     await fetch('/api/visibility', {
