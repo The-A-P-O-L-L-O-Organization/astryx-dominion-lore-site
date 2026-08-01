@@ -108,8 +108,13 @@ export async function POST(request: Request) {
       'session-notes',
     );
     if (!existsSync(repoDir)) await mkdir(repoDir, { recursive: true });
+    const repoDirResolved = path.resolve(repoDir);
+    const notePath = path.resolve(repoDirResolved, `${slug}.md`);
+    if (!notePath.startsWith(repoDirResolved + path.sep)) {
+      return NextResponse.json({ error: 'Invalid slug' }, { status: 400 });
+    }
     await writeFile(
-      path.join(repoDir, `${slug}.md`),
+      notePath,
       `---\ntitle: ${body.title}\nis_dm_only: ${!!body.isDmOnly}\nslug: ${slug}\n---\n\n${body.contentMd}`,
     );
 
@@ -149,8 +154,13 @@ export async function PUT(request: Request) {
       );
       if (!existsSync(repoDir)) await mkdir(repoDir, { recursive: true });
       const safeSlug = sanitizeSlug(note.slug);
+      const repoDirResolved = path.resolve(repoDir);
+      const notePath = path.resolve(repoDirResolved, `${safeSlug}.md`);
+      if (!notePath.startsWith(repoDirResolved + path.sep)) {
+        return NextResponse.json({ error: 'Invalid slug' }, { status: 400 });
+      }
       await writeFile(
-        path.join(repoDir, `${safeSlug}.md`),
+        notePath,
         `---\ntitle: ${body.title}\nis_dm_only: ${!!body.isDmOnly}\nslug: ${note.slug}\n---\n\n${body.contentMd}`,
       );
     }
