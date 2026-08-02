@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { GET, POST, PUT, DELETE } from '@/app/api/campaigns/route';
+import { THEMES } from '@/lib/themes';
 
 vi.mock('@/lib/db', async () => {
   const { default: Database } =
@@ -11,7 +12,7 @@ vi.mock('@/lib/db', async () => {
     await vi.importActual<typeof import('@/lib/db/schema')>('@/lib/db/schema');
   const sqlite = new Database(':memory:');
   sqlite.exec(`
-    CREATE TABLE campaigns (id INTEGER PRIMARY KEY, name TEXT NOT NULL, description TEXT NOT NULL DEFAULT '', lore_repo_url TEXT NOT NULL DEFAULT '', theme TEXT NOT NULL DEFAULT 'sci-fi', is_hidden INTEGER NOT NULL DEFAULT 0, star_map_config TEXT NOT NULL DEFAULT '{}', created_at TEXT NOT NULL DEFAULT (datetime('now')));
+    CREATE TABLE campaigns (id INTEGER PRIMARY KEY, name TEXT NOT NULL, description TEXT NOT NULL DEFAULT '', lore_repo_url TEXT NOT NULL DEFAULT '', theme TEXT NOT NULL DEFAULT 'techno', is_hidden INTEGER NOT NULL DEFAULT 0, star_map_config TEXT NOT NULL DEFAULT '{}', created_at TEXT NOT NULL DEFAULT (datetime('now')));
   `);
   return { db: drizzle(sqlite, { schema: schemaMod }) };
 });
@@ -143,15 +144,21 @@ describe('POST /api/campaigns theme validation', () => {
     vi.clearAllMocks();
   });
 
-  it('accepts any valid theme', async () => {
-    const req = new Request('http://localhost/api/campaigns', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ name: 'Forest', loreRepoUrl: 'x', theme: 'forest' }),
-    });
-    await POST(req);
-    const c = db.select().from(schema.campaigns).get()!;
-    expect(c.theme).toBe('forest');
+  it('accepts every valid theme', async () => {
+    for (const theme of THEMES) {
+      const req = new Request('http://localhost/api/campaigns', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: `Campaign ${theme}`,
+          loreRepoUrl: 'x',
+          theme,
+        }),
+      });
+      await POST(req);
+      const stored = db.select().from(schema.campaigns).all();
+      expect(stored[stored.length - 1].theme).toBe(theme);
+    }
   });
 
   it('coerces an unknown theme to techno', async () => {
@@ -194,5 +201,26 @@ describe('POST /api/campaigns theme validation', () => {
     await PUT(req);
     const c = db.select().from(schema.campaigns).get()!;
     expect(c.theme).toBe('techno');
+  });
+
+  it('does not change theme when theme is omitted on update', async () => {
+    db.insert(schema.campaigns)
+      .values({ name: 'Forest', loreRepoUrl: 'x', theme: 'forest' })
+      .run();
+    const req = new Request('http://localhost/api/campaigns', {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        id: 1,
+        name: 'Forest',
+        loreRepoUrl: 'x',
+        description: '',
+        isHidden: false,
+        starMapConfig: '{}',
+      }),
+    });
+    await PUT(req);
+    const c = db.select().from(schema.campaigns).get()!;
+    expect(c.theme).toBe('forest');
   });
 });

@@ -20,3 +20,8 @@ export const THEME_LABELS: Record<Theme, string> = {
 
 export const isTheme = (v: unknown): v is Theme =>
   typeof v === 'string' && (THEMES as readonly string[]).includes(v);
+
+export const DEFAULT_THEME = THEMES[0];
+
+export const coerceTheme = (v: unknown): Theme =>
+  isTheme(v) ? v : DEFAULT_THEME;

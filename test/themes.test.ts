@@ -1,5 +1,11 @@
 import { describe, it, expect } from 'vitest';
-import { THEMES, THEME_LABELS, isTheme } from '@/lib/themes';
+import {
+  THEMES,
+  THEME_LABELS,
+  isTheme,
+  DEFAULT_THEME,
+  coerceTheme,
+} from '@/lib/themes';
 
 describe('lib/themes', () => {
   it('lists exactly the six themes in order', () => {
@@ -33,5 +39,17 @@ describe('lib/themes', () => {
     expect(isTheme(undefined)).toBe(false);
     expect(isTheme(null)).toBe(false);
     expect(isTheme(42)).toBe(false);
+  });
+
+  it('has a default theme of techno', () => {
+    expect(DEFAULT_THEME).toBe('techno');
+  });
+
+  it('coerces valid themes to themselves and unknown or absent themes to the default', () => {
+    expect(coerceTheme('techno')).toBe('techno');
+    expect(coerceTheme('void')).toBe('void');
+    expect(coerceTheme('ocean')).toBe('techno');
+    expect(coerceTheme('sci-fi')).toBe('techno');
+    expect(coerceTheme(undefined)).toBe('techno');
   });
 });
