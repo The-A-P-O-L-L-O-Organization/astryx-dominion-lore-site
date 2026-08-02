@@ -82,7 +82,7 @@ describe('POST /api/campaigns', () => {
     });
     await POST(req);
     const c = db.select().from(schema.campaigns).get()!;
-    expect(c.theme).toBe('sci-fi');
+    expect(c.theme).toBe('techno');
     expect(c.isHidden).toBe(false);
   });
 });
@@ -103,7 +103,7 @@ describe('PUT /api/campaigns', () => {
         name: 'Updated',
         loreRepoUrl: 'x',
         description: '',
-        theme: 'fantasy',
+        theme: 'forest',
         isHidden: false,
         starMapConfig: '{}',
       }),
@@ -112,7 +112,7 @@ describe('PUT /api/campaigns', () => {
     expect(res.status).toBe(200);
     const c = db.select().from(schema.campaigns).get()!;
     expect(c.name).toBe('Updated');
-    expect(c.theme).toBe('fantasy');
+    expect(c.theme).toBe('forest');
   });
 });
 
@@ -134,5 +134,65 @@ describe('DELETE /api/campaigns', () => {
     const res = await DELETE(req);
     expect(res.status).toBe(200);
     expect(db.select().from(schema.campaigns).all()).toHaveLength(0);
+  });
+});
+
+describe('POST /api/campaigns theme validation', () => {
+  beforeEach(() => {
+    db.delete(schema.campaigns).run();
+    vi.clearAllMocks();
+  });
+
+  it('accepts any valid theme', async () => {
+    const req = new Request('http://localhost/api/campaigns', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name: 'Forest', loreRepoUrl: 'x', theme: 'forest' }),
+    });
+    await POST(req);
+    const c = db.select().from(schema.campaigns).get()!;
+    expect(c.theme).toBe('forest');
+  });
+
+  it('coerces an unknown theme to techno', async () => {
+    const req = new Request('http://localhost/api/campaigns', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name: 'Bad', loreRepoUrl: 'x', theme: 'ocean' }),
+    });
+    await POST(req);
+    const c = db.select().from(schema.campaigns).get()!;
+    expect(c.theme).toBe('techno');
+  });
+
+  it('coerces a legacy theme name to its new key on create', async () => {
+    const req = new Request('http://localhost/api/campaigns', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name: 'Old', loreRepoUrl: 'x', theme: 'sci-fi' }),
+    });
+    await POST(req);
+    const c = db.select().from(schema.campaigns).get()!;
+    expect(c.theme).toBe('techno');
+  });
+
+  it('coerces an unknown theme to techno on update', async () => {
+    db.insert(schema.campaigns).values({ name: 'Old', loreRepoUrl: 'x' }).run();
+    const req = new Request('http://localhost/api/campaigns', {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        id: 1,
+        name: 'Updated',
+        loreRepoUrl: 'x',
+        description: '',
+        theme: 'ocean',
+        isHidden: false,
+        starMapConfig: '{}',
+      }),
+    });
+    await PUT(req);
+    const c = db.select().from(schema.campaigns).get()!;
+    expect(c.theme).toBe('techno');
   });
 });

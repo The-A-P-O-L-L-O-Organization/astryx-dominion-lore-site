@@ -3,6 +3,7 @@ import { db } from '@/lib/db';
 import { campaigns } from '@/lib/db/schema';
 import { requireAdmin } from '@/lib/auth';
 import { eq } from 'drizzle-orm';
+import { isTheme } from '@/lib/themes';
 
 export async function GET() {
   const all = db.select().from(campaigns).all();
@@ -23,7 +24,7 @@ export async function POST(request: Request) {
         name: body.name,
         description: body.description || '',
         loreRepoUrl: body.loreRepoUrl,
-        theme: body.theme || 'sci-fi',
+        theme: isTheme(body.theme) ? body.theme : 'techno',
         isHidden: body.isHidden || false,
         starMapConfig: body.starMapConfig || '{}',
       })
@@ -38,12 +39,13 @@ export async function PUT(request: Request) {
   try {
     await requireAdmin();
     const body = await request.json();
+    const theme = isTheme(body.theme) ? body.theme : 'techno';
     db.update(campaigns)
       .set({
         name: body.name,
         description: body.description,
         loreRepoUrl: body.loreRepoUrl,
-        theme: body.theme,
+        theme,
         isHidden: body.isHidden,
         starMapConfig: body.starMapConfig,
       })
