@@ -6,6 +6,14 @@ import { eq, and } from 'drizzle-orm';
 import { writeFile, mkdir } from 'fs/promises';
 import { existsSync } from 'fs';
 import path from 'path';
+import {
+  BadRequestError,
+  errorResponse,
+  optionalString,
+  parseJsonBody,
+  requireNumber,
+  requireString,
+} from '@/lib/api-errors';
 
 const CONTENT_DIR = process.env.CONTENT_DIR || '/data/repos';
 
@@ -72,33 +80,32 @@ export async function GET(request: Request) {
     }
 
     return NextResponse.json(notes);
-  } catch {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  } catch (err) {
+    return errorResponse('GET /api/sessions', err);
   }
 }
 
 export async function POST(request: Request) {
   try {
     await requireAdmin();
-    const body = await request.json();
+    const body = await parseJsonBody(request);
 
-    const campaignIdNum = Number(body.campaignId);
-    if (isNaN(campaignIdNum)) {
-      return NextResponse.json(
-        { error: 'Invalid campaign ID' },
-        { status: 400 },
-      );
-    }
+    const campaignIdNum = requireNumber(body, 'campaignId');
+    const title = requireString(body, 'title');
+    const contentMd = optionalString(body, 'contentMd');
+    const isDmOnly = !!body.isDmOnly;
 
-    const slug = sanitizeSlug(body.slug);
+    const slug = sanitizeSlug(requireString(body, 'slug'));
+    if (!slug) throw new BadRequestError('Invalid slug');
+
     db.insert(sessionNotes)
       .values({
         campaignId: campaignIdNum,
         slug,
-        title: body.title,
-        contentMd: body.contentMd,
-        authorId: body.authorId || null,
-        isDmOnly: body.isDmOnly || false,
+        title,
+        contentMd,
+        authorId: typeof body.authorId === 'number' ? body.authorId : null,
+        isDmOnly,
       })
       .run();
 
@@ -115,36 +122,41 @@ export async function POST(request: Request) {
     }
     await writeFile(
       notePath,
-      `---\ntitle: ${body.title}\nis_dm_only: ${!!body.isDmOnly}\nslug: ${slug}\n---\n\n${body.contentMd}`,
+      `---\ntitle: ${title}\nis_dm_only: ${isDmOnly}\nslug: ${slug}\n---\n\n${contentMd}`,
     );
 
     return NextResponse.json(
       { message: 'Session note created' },
       { status: 201 },
     );
-  } catch {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  } catch (err) {
+    return errorResponse('POST /api/sessions', err);
   }
 }
 
 export async function PUT(request: Request) {
   try {
     await requireAdmin();
-    const body = await request.json();
+    const body = await parseJsonBody(request);
+    const id = requireNumber(body, 'id');
+    const title = requireString(body, 'title');
+    const contentMd = optionalString(body, 'contentMd');
+    const isDmOnly = !!body.isDmOnly;
+
     db.update(sessionNotes)
       .set({
-        title: body.title,
-        contentMd: body.contentMd,
-        isDmOnly: body.isDmOnly,
+        title,
+        contentMd,
+        isDmOnly,
         updatedAt: new Date().toISOString(),
       })
-      .where(eq(sessionNotes.id, body.id))
+      .where(eq(sessionNotes.id, id))
       .run();
 
     const note = db
       .select()
       .from(sessionNotes)
-      .where(eq(sessionNotes.id, body.id))
+      .where(eq(sessionNotes.id, id))
       .get();
     if (note) {
       const repoDir = path.join(
@@ -161,23 +173,25 @@ export async function PUT(request: Request) {
       }
       await writeFile(
         notePath,
-        `---\ntitle: ${body.title}\nis_dm_only: ${!!body.isDmOnly}\nslug: ${note.slug}\n---\n\n${body.contentMd}`,
+        `---\ntitle: ${title}\nis_dm_only: ${isDmOnly}\nslug: ${note.slug}\n---\n\n${contentMd}`,
       );
     }
 
     return NextResponse.json({ message: 'Session note updated' });
-  } catch {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  } catch (err) {
+    return errorResponse('PUT /api/sessions', err);
   }
 }
 
 export async function DELETE(request: Request) {
   try {
     await requireAdmin();
-    const { id } = await request.json();
-    db.delete(sessionNotes).where(eq(sessionNotes.id, id)).run();
+    const body = await parseJsonBody(request);
+    db.delete(sessionNotes)
+      .where(eq(sessionNotes.id, requireNumber(body, 'id')))
+      .run();
     return NextResponse.json({ message: 'Session note deleted' });
-  } catch {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  } catch (err) {
+    return errorResponse('DELETE /api/sessions', err);
   }
 }

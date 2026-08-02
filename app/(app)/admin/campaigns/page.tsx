@@ -14,6 +14,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
+import { apiFetch, apiJson, errorMessage } from '@/lib/api-client';
 
 interface Campaign {
   id: number;
@@ -37,22 +38,31 @@ export default function AdminCampaignsPage() {
     isHidden: false,
     starMapConfig: '{}',
   });
+  const [error, setError] = useState('');
   const router = useRouter();
 
   async function fetchCampaigns() {
-    const res = await fetch('/api/campaigns');
-    return res.json();
+    return apiJson<Campaign[]>('/api/campaigns');
   }
 
   async function load() {
-    setCampaigns(await fetchCampaigns());
+    try {
+      setCampaigns(await fetchCampaigns());
+      setError('');
+    } catch (err) {
+      setError(errorMessage(err, 'Failed to load campaigns'));
+    }
   }
 
   useEffect(() => {
     let ignore = false;
-    fetchCampaigns().then((data) => {
-      if (!ignore) setCampaigns(data);
-    });
+    fetchCampaigns()
+      .then((data) => {
+        if (!ignore) setCampaigns(data);
+      })
+      .catch((err) => {
+        if (!ignore) setError(errorMessage(err, 'Failed to load campaigns'));
+      });
     return () => {
       ignore = true;
     };
@@ -62,11 +72,16 @@ export default function AdminCampaignsPage() {
     e.preventDefault();
     const method = editId ? 'PUT' : 'POST';
     const body = editId ? { id: editId, ...form } : form;
-    await fetch('/api/campaigns', {
-      method,
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(body),
-    });
+    try {
+      await apiFetch('/api/campaigns', {
+        method,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+      });
+    } catch (err) {
+      setError(errorMessage(err, 'Failed to save campaign'));
+      return;
+    }
     setShowNew(false);
     setEditId(null);
     setForm({
@@ -82,11 +97,16 @@ export default function AdminCampaignsPage() {
 
   async function handleDelete(id: number) {
     if (!confirm('Delete this campaign?')) return;
-    await fetch('/api/campaigns', {
-      method: 'DELETE',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ id }),
-    });
+    try {
+      await apiFetch('/api/campaigns', {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id }),
+      });
+    } catch (err) {
+      setError(errorMessage(err, 'Failed to delete campaign'));
+      return;
+    }
     load();
   }
 
@@ -128,6 +148,8 @@ export default function AdminCampaignsPage() {
           New Campaign
         </Button>
       </div>
+
+      {error && <p className="text-sm text-destructive">{error}</p>}
 
       {(showNew || editId) && (
         <Card className="mb-6">

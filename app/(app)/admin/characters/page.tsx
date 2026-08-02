@@ -11,6 +11,7 @@ import {
   CardDescription,
 } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { apiFetch, apiJson, errorMessage } from '@/lib/api-client';
 
 interface Character {
   id: number;
@@ -24,33 +25,47 @@ interface Character {
 
 export default function AdminCharactersPage() {
   const [chars, setChars] = useState<Character[]>([]);
+  const [error, setError] = useState('');
   const router = useRouter();
 
   async function fetchChars() {
-    const res = await fetch('/api/characters');
-    return res.json();
+    return apiJson<Character[]>('/api/characters');
   }
 
   async function load() {
-    setChars(await fetchChars());
+    try {
+      setChars(await fetchChars());
+      setError('');
+    } catch (err) {
+      setError(errorMessage(err, 'Failed to load characters'));
+    }
   }
 
   useEffect(() => {
     let ignore = false;
-    fetchChars().then((data) => {
-      if (!ignore) setChars(data);
-    });
+    fetchChars()
+      .then((data) => {
+        if (!ignore) setChars(data);
+      })
+      .catch((err) => {
+        if (!ignore) setError(errorMessage(err, 'Failed to load characters'));
+      });
     return () => {
       ignore = true;
     };
   }, []);
 
   async function approve(id: number, approved: boolean) {
-    await fetch('/api/characters', {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ id, isApproved: approved }),
-    });
+    try {
+      await apiFetch('/api/characters', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id, isApproved: approved }),
+      });
+    } catch (err) {
+      setError(errorMessage(err, 'Failed to update character'));
+      return;
+    }
     load();
   }
 
@@ -65,6 +80,8 @@ export default function AdminCharactersPage() {
           Review character applications and approve players.
         </p>
       </div>
+
+      {error && <p className="text-sm text-destructive">{error}</p>}
 
       <h2 className="text-lg font-semibold tracking-tight">
         Pending Approval ({pending.length})

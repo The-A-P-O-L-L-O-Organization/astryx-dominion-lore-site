@@ -3,10 +3,15 @@ import { db } from '@/lib/db';
 import { users } from '@/lib/db/schema';
 import { verifyPassword, createSession } from '@/lib/auth';
 import { eq } from 'drizzle-orm';
+import { errorResponse, parseJsonBody } from '@/lib/api-errors';
 
 export async function POST(request: Request) {
   try {
-    const { username, password } = await request.json();
+    const body = await parseJsonBody(request);
+    const { username, password } = body as {
+      username?: string;
+      password?: string;
+    };
     if (!username || !password) {
       return NextResponse.json(
         { error: 'Username and password required' },
@@ -28,10 +33,7 @@ export async function POST(request: Request) {
 
     await createSession(user.id);
     return NextResponse.json({ username: user.username, role: user.role });
-  } catch {
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 },
-    );
+  } catch (err) {
+    return errorResponse('POST /api/auth/login', err);
   }
 }

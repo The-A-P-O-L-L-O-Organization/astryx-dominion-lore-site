@@ -14,6 +14,7 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 import Link from 'next/link';
+import { apiFetch, errorMessage } from '@/lib/api-client';
 
 export default function RegisterPage() {
   const [username, setUsername] = useState('');
@@ -29,17 +30,15 @@ export default function RegisterPage() {
     setSuccess('');
     if (password !== confirm) return setError('Passwords do not match');
     try {
-      const res = await fetch('/api/auth/register', {
+      await apiFetch('/api/auth/register', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ username, password }),
       });
-      const data = await res.json();
-      if (!res.ok) return setError(data.error || 'Registration failed');
       setSuccess('Account created! Redirecting to login...');
       setTimeout(() => router.push('/login'), 1500);
-    } catch {
-      return setError('Network error — please try again');
+    } catch (err) {
+      return setError(errorMessage(err, 'Registration failed'));
     }
   }
 

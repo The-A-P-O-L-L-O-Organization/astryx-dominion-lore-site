@@ -36,6 +36,7 @@ import {
   SidebarMenuSubItem,
   SidebarRail,
 } from '@/components/ui/sidebar';
+import { apiFetch, errorMessage } from '@/lib/api-client';
 import { cn } from '@/lib/utils';
 
 export interface CharacterNav {
@@ -53,9 +54,15 @@ export function AppSidebar({ characters, isAdmin, username }: AppSidebarProps) {
   const pathname = usePathname();
   const router = useRouter();
   const [openCharacterId, setOpenCharacterId] = useState<number | null>(null);
+  const [logoutError, setLogoutError] = useState('');
 
   async function handleLogout() {
-    await fetch('/api/auth/logout', { method: 'POST' });
+    try {
+      await apiFetch('/api/auth/logout', { method: 'POST' });
+    } catch (err) {
+      setLogoutError(errorMessage(err, 'Logout failed — please try again'));
+      return;
+    }
     router.push('/login');
     router.refresh();
   }
@@ -253,6 +260,9 @@ export function AppSidebar({ characters, isAdmin, username }: AppSidebarProps) {
               <LogOut />
               Log out
             </Button>
+            {logoutError && (
+              <p className="px-2 text-xs text-destructive">{logoutError}</p>
+            )}
           </SidebarMenuItem>
         </SidebarMenu>
       </SidebarFooter>

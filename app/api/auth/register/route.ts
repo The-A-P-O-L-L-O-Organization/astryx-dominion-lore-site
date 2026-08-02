@@ -3,6 +3,7 @@ import { db } from '@/lib/db';
 import { users } from '@/lib/db/schema';
 import { hashPassword } from '@/lib/auth';
 import { eq } from 'drizzle-orm';
+import { errorResponse, parseJsonBody } from '@/lib/api-errors';
 
 const rateLimitMap = new Map<string, number>();
 
@@ -24,7 +25,11 @@ export async function POST(request: Request) {
       );
     }
 
-    const { username, password } = await request.json();
+    const body = await parseJsonBody(request);
+    const { username, password } = body as {
+      username?: string;
+      password?: string;
+    };
     if (!username || !password || password.length < 6) {
       return NextResponse.json(
         { error: 'Username and password (min 6 chars) required' },
@@ -54,10 +59,7 @@ export async function POST(request: Request) {
       { message: 'Account created', role },
       { status: 201 },
     );
-  } catch {
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 },
-    );
+  } catch (err) {
+    return errorResponse('POST /api/auth/register', err);
   }
 }

@@ -4,6 +4,21 @@ import { db } from '@/lib/db';
 import { characters, campaigns, contentCache } from '@/lib/db/schema';
 import { eq, and, isNotNull } from 'drizzle-orm';
 import { StarmapClient } from './starmap-client';
+import { parseJsonOrDefault } from '@/lib/json';
+
+interface PlanetData {
+  type?: string;
+  name?: string;
+  color?: string;
+  orbit_radius?: number;
+  orbit_speed?: number;
+  terrain_type?: string;
+  star_type?: string;
+  belt_width?: number;
+  belt_density?: number;
+  parent_id?: string;
+  markers?: unknown[];
+}
 
 export default async function StarmapPage({
   params,
@@ -32,7 +47,11 @@ export default async function StarmapPage({
     .get();
   if (!campaign) notFound();
 
-  const starMapConfig = JSON.parse(campaign.starMapConfig);
+  const starMapConfig = parseJsonOrDefault(
+    campaign.starMapConfig,
+    `star_map_config for campaign ${campaign.id}`,
+    {},
+  );
 
   const bodies = db
     .select({
@@ -48,9 +67,23 @@ export default async function StarmapPage({
       ),
     )
     .all()
-    .map((b) => {
-      const pd = JSON.parse(b.planetData!);
-      const fm = JSON.parse(b.frontmatter);
+    .flatMap((b) => {
+      const pd = parseJsonOrDefault<PlanetData>(
+        b.planetData,
+        `planet_data for ${b.pagePath}`,
+        {},
+      );
+      const fm = parseJsonOrDefault<{ title?: string }>(
+        b.frontmatter,
+        `frontmatter for ${b.pagePath}`,
+        {},
+      );
+      if (!pd.type) {
+        console.error(
+          `Skipping star map body ${b.pagePath}: planet_data has no type`,
+        );
+        return [];
+      }
       return {
         type: pd.type,
         name: pd.name || fm.title || b.pagePath,

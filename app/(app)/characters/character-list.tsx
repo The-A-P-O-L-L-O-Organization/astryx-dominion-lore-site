@@ -20,6 +20,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { apiFetch, errorMessage } from '@/lib/api-client';
 
 type Character = {
   id: number;
@@ -57,16 +58,14 @@ export function CharacterList({
     e.preventDefault();
     setError('');
     try {
-      const res = await fetch('/api/characters', {
+      await apiFetch('/api/characters', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ name, info, campaignId: Number(campaignId) }),
       });
-      const data = await res.json();
-      if (!res.ok) return setError(data.error || 'Failed to create');
       setShowCreate(false);
-    } catch {
-      return setError('Network error — please try again');
+    } catch (err) {
+      return setError(errorMessage(err, 'Failed to create character'));
     }
     setName('');
     setInfo('');

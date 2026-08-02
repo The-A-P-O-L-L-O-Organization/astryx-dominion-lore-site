@@ -9,6 +9,7 @@ import {
   getPageVisibility,
   getHiddenSectionIds,
 } from '@/lib/content/visibility';
+import { parseJsonOrDefault } from '@/lib/json';
 
 export default async function LorePage({
   params,
@@ -62,7 +63,11 @@ export default async function LorePage({
     .where(eq(contentCache.campaignId, campaign.id))
     .all()
     .map((p) => {
-      const fm = JSON.parse(p.frontmatter);
+      const fm = parseJsonOrDefault<{ title?: string }>(
+        p.frontmatter,
+        `frontmatter for ${p.pagePath}`,
+        {},
+      );
       const parts = p.pagePath.split('/');
       return {
         path: p.pagePath,
@@ -71,7 +76,11 @@ export default async function LorePage({
       };
     });
 
-  const fm = JSON.parse(cached.frontmatter);
+  const fm = parseJsonOrDefault<{ title?: string }>(
+    cached.frontmatter,
+    `frontmatter for ${pagePathStr}`,
+    {},
+  );
 
   return (
     <div className="flex flex-col gap-6 md:flex-row md:items-start">

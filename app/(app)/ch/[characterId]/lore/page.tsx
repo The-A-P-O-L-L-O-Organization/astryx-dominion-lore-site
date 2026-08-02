@@ -5,6 +5,7 @@ import { characters, campaigns, contentCache } from '@/lib/db/schema';
 import { eq } from 'drizzle-orm';
 import { LoreSidebar } from '@/components/lore-sidebar';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { parseJsonOrDefault } from '@/lib/json';
 
 export default async function LoreIndexPage({
   params,
@@ -41,7 +42,11 @@ export default async function LoreIndexPage({
     .where(eq(contentCache.campaignId, campaign.id))
     .all()
     .map((p) => {
-      const fm = JSON.parse(p.frontmatter);
+      const fm = parseJsonOrDefault<{ title?: string }>(
+        p.frontmatter,
+        `frontmatter for ${p.pagePath}`,
+        {},
+      );
       const parts = p.pagePath.split('/');
       return {
         path: p.pagePath,

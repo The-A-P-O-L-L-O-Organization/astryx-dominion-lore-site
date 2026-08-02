@@ -15,6 +15,7 @@ import {
 } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
+import { apiFetch, apiJson, errorMessage } from '@/lib/api-client';
 
 interface SessionNote {
   id: number;
@@ -43,29 +44,47 @@ export default function AdminSessionsPage() {
     contentMd: '',
     isDmOnly: false,
   });
+  const [error, setError] = useState('');
   const router = useRouter();
 
   useEffect(() => {
-    fetch('/api/campaigns')
-      .then((r) => r.json())
-      .then(setCampaigns);
+    let ignore = false;
+    apiJson<Campaign[]>('/api/campaigns')
+      .then((data) => {
+        if (!ignore) setCampaigns(data);
+      })
+      .catch((err) => {
+        if (!ignore) setError(errorMessage(err, 'Failed to load campaigns'));
+      });
+    return () => {
+      ignore = true;
+    };
   }, []);
 
   async function fetchNotes(campaignId: string) {
     if (!campaignId) return [];
-    const res = await fetch(`/api/sessions?campaignId=${campaignId}`);
-    return res.json();
+    return apiJson<SessionNote[]>(`/api/sessions?campaignId=${campaignId}`);
   }
 
   async function loadNotes(campaignId: string) {
-    setNotes(await fetchNotes(campaignId));
+    try {
+      setNotes(await fetchNotes(campaignId));
+      setError('');
+    } catch (err) {
+      setError(errorMessage(err, 'Failed to load session notes'));
+    }
   }
 
   useEffect(() => {
     let ignore = false;
-    fetchNotes(selectedCampaign).then((data) => {
-      if (!ignore) setNotes(data);
-    });
+    fetchNotes(selectedCampaign)
+      .then((data) => {
+        if (!ignore) setNotes(data);
+      })
+      .catch((err) => {
+        if (!ignore)
+          setError(errorMessage(err, 'Failed to load session notes'));
+      });
     return () => {
       ignore = true;
     };
@@ -76,11 +95,16 @@ export default function AdminSessionsPage() {
     const body = editId
       ? { id: editId, ...form, campaignId: Number(selectedCampaign) }
       : { ...form, campaignId: Number(selectedCampaign) };
-    await fetch('/api/sessions', {
-      method: editId ? 'PUT' : 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(body),
-    });
+    try {
+      await apiFetch('/api/sessions', {
+        method: editId ? 'PUT' : 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+      });
+    } catch (err) {
+      setError(errorMessage(err, 'Failed to save session note'));
+      return;
+    }
     setShowNew(false);
     setEditId(null);
     setForm({ slug: '', title: '', contentMd: '', isDmOnly: false });
@@ -89,11 +113,16 @@ export default function AdminSessionsPage() {
 
   async function handleDelete(id: number) {
     if (!confirm('Delete this note?')) return;
-    await fetch('/api/sessions', {
-      method: 'DELETE',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ id }),
-    });
+    try {
+      await apiFetch('/api/sessions', {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id }),
+      });
+    } catch (err) {
+      setError(errorMessage(err, 'Failed to delete session note'));
+      return;
+    }
     loadNotes(selectedCampaign);
   }
 
@@ -115,6 +144,8 @@ export default function AdminSessionsPage() {
           Author session logs and DM-only notes for a campaign.
         </p>
       </div>
+
+      {error && <p className="text-sm text-destructive">{error}</p>}
 
       <Select
         value={selectedCampaign}

@@ -14,6 +14,7 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 import Link from 'next/link';
+import { apiFetch, errorMessage } from '@/lib/api-client';
 
 export default function LoginPage() {
   const [username, setUsername] = useState('');
@@ -25,16 +26,14 @@ export default function LoginPage() {
     e.preventDefault();
     setError('');
     try {
-      const res = await fetch('/api/auth/login', {
+      await apiFetch('/api/auth/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ username, password }),
       });
-      const data = await res.json();
-      if (!res.ok) return setError(data.error || 'Login failed');
       router.push('/characters');
-    } catch {
-      return setError('Network error — please try again');
+    } catch (err) {
+      return setError(errorMessage(err, 'Login failed'));
     }
     router.refresh();
   }
