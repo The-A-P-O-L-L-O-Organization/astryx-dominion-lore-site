@@ -14,7 +14,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
-import { THEMES, THEME_LABELS } from '@/lib/themes';
+import { THEMES, THEME_LABELS, isTheme } from '@/lib/themes';
 
 interface Campaign {
   id: number;
@@ -212,8 +212,7 @@ export default function AdminCampaignsPage() {
                 <CardTitle className="text-lg">{c.name}</CardTitle>
                 <div className="flex gap-2">
                   <Badge>
-                    {THEME_LABELS[c.theme as keyof typeof THEME_LABELS] ??
-                      c.theme}
+                    {isTheme(c.theme) ? THEME_LABELS[c.theme] : c.theme}
                   </Badge>
                   {c.isHidden ? (
                     <Badge variant="secondary">Hidden</Badge>
