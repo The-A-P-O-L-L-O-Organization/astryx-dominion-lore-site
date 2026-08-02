@@ -14,6 +14,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
+import { THEMES, THEME_LABELS } from '@/lib/themes';
 
 interface Campaign {
   id: number;
@@ -33,7 +34,7 @@ export default function AdminCampaignsPage() {
     name: '',
     description: '',
     loreRepoUrl: '',
-    theme: 'sci-fi',
+    theme: 'techno',
     isHidden: false,
     starMapConfig: '{}',
   });
@@ -73,7 +74,7 @@ export default function AdminCampaignsPage() {
       name: '',
       description: '',
       loreRepoUrl: '',
-      theme: 'sci-fi',
+      theme: 'techno',
       isHidden: false,
       starMapConfig: '{}',
     });
@@ -119,7 +120,7 @@ export default function AdminCampaignsPage() {
               name: '',
               description: '',
               loreRepoUrl: '',
-              theme: 'sci-fi',
+              theme: 'techno',
               isHidden: false,
               starMapConfig: '{}',
             });
@@ -165,8 +166,11 @@ export default function AdminCampaignsPage() {
                   <SelectValue placeholder="Theme" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="sci-fi">Sci-fi</SelectItem>
-                  <SelectItem value="fantasy">Fantasy</SelectItem>
+                  {THEMES.map((theme) => (
+                    <SelectItem key={theme} value={theme}>
+                      {THEME_LABELS[theme]}
+                    </SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
               <label className="flex items-center gap-2 text-sm">
@@ -207,7 +211,10 @@ export default function AdminCampaignsPage() {
               <div className="flex items-center justify-between">
                 <CardTitle className="text-lg">{c.name}</CardTitle>
                 <div className="flex gap-2">
-                  <Badge>{c.theme}</Badge>
+                  <Badge>
+                    {THEME_LABELS[c.theme as keyof typeof THEME_LABELS] ??
+                      c.theme}
+                  </Badge>
                   {c.isHidden ? (
                     <Badge variant="secondary">Hidden</Badge>
                   ) : null}
