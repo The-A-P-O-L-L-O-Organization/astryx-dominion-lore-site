@@ -11,7 +11,6 @@ export async function GET() {
     if (user.role === 'admin') {
       return NextResponse.json(db.select().from(campaigns).all());
     }
-    // Players never see the repo URL (it can embed credentials) or hidden campaigns.
     const visible = db
       .select({
         id: campaigns.id,

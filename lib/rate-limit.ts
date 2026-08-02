@@ -13,10 +13,6 @@ function prune(now: number): void {
   if (buckets.size > MAX_BUCKETS) buckets.clear();
 }
 
-/**
- * Fixed-window counter. Returns true when the caller has exceeded `limit`
- * requests within `windowMs` for the given key.
- */
 export function isRateLimited(
   key: string,
   limit: number,

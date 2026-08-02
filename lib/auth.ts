@@ -41,7 +41,6 @@ export async function createSession(userId: number): Promise<string> {
   const cookieStore = await cookies();
   cookieStore.set(SESSION_COOKIE, sessionId, {
     httpOnly: true,
-    // LAN deployments run over plain HTTP; set SECURE_COOKIES=true behind TLS.
     secure: process.env.SECURE_COOKIES === 'true',
     sameSite: 'lax',
     path: '/',
