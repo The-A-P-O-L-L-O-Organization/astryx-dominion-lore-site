@@ -2,22 +2,16 @@ import { NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { users } from '@/lib/db/schema';
 import { hashPassword } from '@/lib/auth';
+import { getClientIp, isRateLimited } from '@/lib/rate-limit';
 import { eq } from 'drizzle-orm';
 
-const rateLimitMap = new Map<string, number>();
-
-function isRateLimited(ip: string): boolean {
-  const now = Date.now();
-  const last = rateLimitMap.get(ip);
-  if (last && now - last < 60000) return true;
-  rateLimitMap.set(ip, now);
-  return false;
-}
+const REGISTER_LIMIT = 1;
+const REGISTER_WINDOW_MS = 60 * 1000;
 
 export async function POST(request: Request) {
   try {
-    const ip = request.headers.get('x-forwarded-for') || 'unknown';
-    if (isRateLimited(ip)) {
+    const ip = getClientIp(request);
+    if (isRateLimited(`register:${ip}`, REGISTER_LIMIT, REGISTER_WINDOW_MS)) {
       return NextResponse.json(
         { error: 'Too many registrations. Try again later.' },
         { status: 429 },
@@ -25,7 +19,12 @@ export async function POST(request: Request) {
     }
 
     const { username, password } = await request.json();
-    if (!username || !password || password.length < 6) {
+    if (
+      typeof username !== 'string' ||
+      typeof password !== 'string' ||
+      !username ||
+      password.length < 6
+    ) {
       return NextResponse.json(
         { error: 'Username and password (min 6 chars) required' },
         { status: 400 },

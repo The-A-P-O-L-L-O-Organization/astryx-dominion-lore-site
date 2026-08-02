@@ -2,6 +2,8 @@ packages:
   - '.'
 overrides:
   esbuild: 0.28.1
+  postcss: '>=8.5.23'
+  sharp: '>=0.35.3'
 allowBuilds:
   better-sqlite3: true
   esbuild: true
