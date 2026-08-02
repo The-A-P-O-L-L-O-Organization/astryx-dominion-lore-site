@@ -2,19 +2,15 @@ import { NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { pageVisibility, sectionVisibility } from '@/lib/db/schema';
 import { requireAdmin } from '@/lib/auth';
+import { badRequest, withGuard } from '@/lib/api/responses';
 import { eq, and } from 'drizzle-orm';
 
 export async function GET(request: Request) {
-  try {
-    await requireAdmin();
+  return withGuard(requireAdmin, () => {
     const { searchParams } = new URL(request.url);
     const campaignId = searchParams.get('campaignId');
 
-    if (!campaignId)
-      return NextResponse.json(
-        { error: 'campaignId required' },
-        { status: 400 },
-      );
+    if (!campaignId) return badRequest('campaignId required');
 
     const pages = db
       .select()
@@ -29,14 +25,11 @@ export async function GET(request: Request) {
       .all();
 
     return NextResponse.json({ pages, sections });
-  } catch {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
+  });
 }
 
 export async function PUT(request: Request) {
-  try {
-    await requireAdmin();
+  return withGuard(requireAdmin, async () => {
     const body = await request.json();
 
     if (body.type === 'page') {
@@ -63,7 +56,5 @@ export async function PUT(request: Request) {
     }
 
     return NextResponse.json({ message: 'Updated' });
-  } catch {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
+  });
 }

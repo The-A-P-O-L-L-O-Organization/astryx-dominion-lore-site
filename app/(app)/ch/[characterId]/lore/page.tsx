@@ -1,8 +1,5 @@
-import { notFound, redirect } from 'next/navigation';
-import { getSession } from '@/lib/auth';
-import { db } from '@/lib/db';
-import { characters, campaigns, contentCache } from '@/lib/db/schema';
-import { eq } from 'drizzle-orm';
+import { requireCharacterAccess } from '@/lib/character-access';
+import { getLoreIndex } from '@/lib/content/lore-index';
 import { LoreSidebar } from '@/components/lore-sidebar';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
@@ -12,43 +9,9 @@ export default async function LoreIndexPage({
   params: Promise<{ characterId: string }>;
 }) {
   const { characterId } = await params;
-  const characterIdNum = Number(characterId);
-  if (isNaN(characterIdNum)) notFound();
-  const session = await getSession();
-  if (!session) redirect('/login');
+  const { campaign } = await requireCharacterAccess(characterId);
 
-  const character = db
-    .select()
-    .from(characters)
-    .where(eq(characters.id, characterIdNum))
-    .get();
-  if (!character || character.userId !== session.user.id) notFound();
-  if (!character.isApproved) notFound();
-
-  const campaign = db
-    .select()
-    .from(campaigns)
-    .where(eq(campaigns.id, character.campaignId))
-    .get();
-  if (!campaign) notFound();
-
-  const pages = db
-    .select({
-      pagePath: contentCache.pagePath,
-      frontmatter: contentCache.frontmatter,
-    })
-    .from(contentCache)
-    .where(eq(contentCache.campaignId, campaign.id))
-    .all()
-    .map((p) => {
-      const fm = JSON.parse(p.frontmatter);
-      const parts = p.pagePath.split('/');
-      return {
-        path: p.pagePath,
-        title: (fm.title as string) || parts[parts.length - 1],
-        category: parts.length > 1 ? parts[0] : undefined,
-      };
-    });
+  const pages = getLoreIndex(campaign.id);
 
   return (
     <div className="flex flex-col gap-6 md:flex-row md:items-start">

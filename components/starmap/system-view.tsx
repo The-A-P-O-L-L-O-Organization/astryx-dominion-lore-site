@@ -4,20 +4,7 @@ import { useRef } from 'react';
 import { Canvas, useFrame } from '@react-three/fiber';
 import { OrbitControls, Text } from '@react-three/drei';
 import * as THREE from 'three';
-
-interface CelestialBody {
-  type: string;
-  name: string;
-  color: string;
-  orbit_radius?: number;
-  orbit_speed?: number;
-  terrain_type?: string;
-  parent_id?: string;
-  belt_width?: number;
-  belt_density?: number;
-  star_type?: string;
-  pagePath: string;
-}
+import type { CelestialBody } from '@/lib/starmap/types';
 
 interface SystemViewProps {
   starColor: string;

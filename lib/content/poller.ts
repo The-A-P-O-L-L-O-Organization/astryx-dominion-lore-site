@@ -10,6 +10,7 @@ import {
   sectionVisibility,
 } from '@/lib/db/schema';
 import { eq, and } from 'drizzle-orm';
+import { byCampaignPage } from '@/lib/db/filters';
 import { parseMarkdownFile, parseSessionNoteFile } from './parser';
 import simpleGit from 'simple-git';
 
@@ -78,12 +79,7 @@ async function parseContentDir(
       const existingVis = db
         .select()
         .from(pageVisibility)
-        .where(
-          and(
-            eq(pageVisibility.campaignId, campaignId),
-            eq(pageVisibility.pagePath, parsed.pagePath),
-          ),
-        )
+        .where(byCampaignPage(pageVisibility, campaignId, parsed.pagePath))
         .get();
       if (!existingVis) {
         db.insert(pageVisibility)
@@ -97,8 +93,7 @@ async function parseContentDir(
           .from(sectionVisibility)
           .where(
             and(
-              eq(sectionVisibility.campaignId, campaignId),
-              eq(sectionVisibility.pagePath, parsed.pagePath),
+              byCampaignPage(sectionVisibility, campaignId, parsed.pagePath),
               eq(sectionVisibility.sectionId, sectionId),
             ),
           )
@@ -158,12 +153,7 @@ async function parsePlanetDataDir(dir: string, campaignId: number) {
         const existing = db
           .select()
           .from(contentCache)
-          .where(
-            and(
-              eq(contentCache.campaignId, campaignId),
-              eq(contentCache.pagePath, pagePath),
-            ),
-          )
+          .where(byCampaignPage(contentCache, campaignId, pagePath))
           .get();
         if (existing) {
           const pd = existing.planetData ? JSON.parse(existing.planetData) : {};
@@ -172,12 +162,7 @@ async function parsePlanetDataDir(dir: string, campaignId: number) {
               planetData: JSON.stringify({ ...pd, markers }),
               updatedAt: new Date().toISOString(),
             })
-            .where(
-              and(
-                eq(contentCache.campaignId, campaignId),
-                eq(contentCache.pagePath, pagePath),
-              ),
-            )
+            .where(byCampaignPage(contentCache, campaignId, pagePath))
             .run();
         }
       }

@@ -1,8 +1,5 @@
-import { notFound, redirect } from 'next/navigation';
-import { getSession } from '@/lib/auth';
-import { db } from '@/lib/db';
-import { characters, campaigns, sessionNotes } from '@/lib/db/schema';
-import { eq, and } from 'drizzle-orm';
+import { requireCharacterAccess } from '@/lib/character-access';
+import { listSessionNotes } from '@/lib/content/session-notes';
 import {
   Card,
   CardContent,
@@ -19,44 +16,9 @@ export default async function SessionsListPage({
   params: Promise<{ characterId: string }>;
 }) {
   const { characterId } = await params;
-  const characterIdNum = Number(characterId);
-  if (isNaN(characterIdNum)) notFound();
+  const { user, campaign } = await requireCharacterAccess(characterId);
 
-  const session = await getSession();
-  if (!session) redirect('/login');
-
-  const character = db
-    .select()
-    .from(characters)
-    .where(eq(characters.id, characterIdNum))
-    .get();
-  if (!character || character.userId !== session.user.id) notFound();
-  if (!character.isApproved) notFound();
-
-  const campaign = db
-    .select()
-    .from(campaigns)
-    .where(eq(campaigns.id, character.campaignId))
-    .get();
-  if (!campaign) notFound();
-
-  const notes =
-    session.user.role === 'admin'
-      ? db
-          .select()
-          .from(sessionNotes)
-          .where(eq(sessionNotes.campaignId, campaign.id))
-          .all()
-      : db
-          .select()
-          .from(sessionNotes)
-          .where(
-            and(
-              eq(sessionNotes.campaignId, campaign.id),
-              eq(sessionNotes.isDmOnly, false),
-            ),
-          )
-          .all();
+  const notes = listSessionNotes(campaign.id, user.role === 'admin');
 
   return (
     <div className="space-y-6">

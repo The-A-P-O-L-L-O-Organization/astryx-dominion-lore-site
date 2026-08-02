@@ -2,6 +2,7 @@
 
 import { useState, FormEvent } from 'react';
 import { useRouter } from 'next/navigation';
+import { requestJson } from '@/lib/api-client';
 import { Button } from '@/components/ui/button';
 import {
   Card,
@@ -57,13 +58,12 @@ export function CharacterList({
     e.preventDefault();
     setError('');
     try {
-      const res = await fetch('/api/characters', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name, info, campaignId: Number(campaignId) }),
-      });
-      const data = await res.json();
-      if (!res.ok) return setError(data.error || 'Failed to create');
+      const { ok, data } = await requestJson<{ error?: string }>(
+        '/api/characters',
+        'POST',
+        { name, info, campaignId: Number(campaignId) },
+      );
+      if (!ok) return setError(data.error || 'Failed to create');
       setShowCreate(false);
     } catch {
       return setError('Network error — please try again');

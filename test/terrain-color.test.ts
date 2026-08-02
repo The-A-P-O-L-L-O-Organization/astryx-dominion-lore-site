@@ -1,21 +1,5 @@
 import { describe, it, expect } from 'vitest';
-
-function terrainColor(terrainType: string): string {
-  switch (terrainType) {
-    case 'rocky':
-      return '#8B7355';
-    case 'gas_giant':
-      return '#D4A574';
-    case 'ice':
-      return '#B0D4F1';
-    case 'ocean':
-      return '#2E86AB';
-    case 'lava':
-      return '#E85D04';
-    default:
-      return '#8B7355';
-  }
-}
+import { terrainColor } from '@/lib/starmap/terrain';
 
 describe('terrainColor', () => {
   it('returns rocky color for rocky terrain', () => {

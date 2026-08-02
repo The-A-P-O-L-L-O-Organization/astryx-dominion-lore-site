@@ -3,6 +3,7 @@
 import { useState, FormEvent } from 'react';
 import { useRouter } from 'next/navigation';
 import { Orbit } from 'lucide-react';
+import { requestJson } from '@/lib/api-client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -25,13 +26,12 @@ export default function LoginPage() {
     e.preventDefault();
     setError('');
     try {
-      const res = await fetch('/api/auth/login', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ username, password }),
-      });
-      const data = await res.json();
-      if (!res.ok) return setError(data.error || 'Login failed');
+      const { ok, data } = await requestJson<{ error?: string }>(
+        '/api/auth/login',
+        'POST',
+        { username, password },
+      );
+      if (!ok) return setError(data.error || 'Login failed');
       router.push('/characters');
     } catch {
       return setError('Network error — please try again');

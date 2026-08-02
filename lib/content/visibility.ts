@@ -1,5 +1,6 @@
 import { db as defaultDb } from '@/lib/db';
 import { pageVisibility, sectionVisibility } from '@/lib/db/schema';
+import { byCampaignPage } from '@/lib/db/filters';
 import { eq, and } from 'drizzle-orm';
 
 export function getPageVisibility(
@@ -10,12 +11,7 @@ export function getPageVisibility(
   const row = db
     .select()
     .from(pageVisibility)
-    .where(
-      and(
-        eq(pageVisibility.campaignId, campaignId),
-        eq(pageVisibility.pagePath, pagePath),
-      ),
-    )
+    .where(byCampaignPage(pageVisibility, campaignId, pagePath))
     .get();
   return row ? !row.isHidden : false;
 }
@@ -31,8 +27,7 @@ export function getSectionVisibility(
     .from(sectionVisibility)
     .where(
       and(
-        eq(sectionVisibility.campaignId, campaignId),
-        eq(sectionVisibility.pagePath, pagePath),
+        byCampaignPage(sectionVisibility, campaignId, pagePath),
         eq(sectionVisibility.sectionId, sectionId),
       ),
     )
@@ -50,8 +45,7 @@ export function getHiddenSectionIds(
     .from(sectionVisibility)
     .where(
       and(
-        eq(sectionVisibility.campaignId, campaignId),
-        eq(sectionVisibility.pagePath, pagePath),
+        byCampaignPage(sectionVisibility, campaignId, pagePath),
         eq(sectionVisibility.isHidden, true),
       ),
     )

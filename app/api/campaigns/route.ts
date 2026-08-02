@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { campaigns } from '@/lib/db/schema';
 import { requireAdmin } from '@/lib/auth';
+import { badRequest, withGuard } from '@/lib/api/responses';
 import { eq } from 'drizzle-orm';
 
 export async function GET() {
@@ -10,14 +11,13 @@ export async function GET() {
 }
 
 export async function POST(request: Request) {
-  let body: any;
+  let body;
   try {
     body = await request.json();
   } catch {
-    return NextResponse.json({ error: 'Invalid JSON' }, { status: 400 });
+    return badRequest('Invalid JSON');
   }
-  try {
-    await requireAdmin();
+  return withGuard(requireAdmin, () => {
     db.insert(campaigns)
       .values({
         name: body.name,
@@ -29,14 +29,11 @@ export async function POST(request: Request) {
       })
       .run();
     return NextResponse.json({ message: 'Campaign created' }, { status: 201 });
-  } catch (err) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
+  });
 }
 
 export async function PUT(request: Request) {
-  try {
-    await requireAdmin();
+  return withGuard(requireAdmin, async () => {
     const body = await request.json();
     db.update(campaigns)
       .set({
@@ -50,18 +47,13 @@ export async function PUT(request: Request) {
       .where(eq(campaigns.id, body.id))
       .run();
     return NextResponse.json({ message: 'Campaign updated' });
-  } catch {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
+  });
 }
 
 export async function DELETE(request: Request) {
-  try {
-    await requireAdmin();
+  return withGuard(requireAdmin, async () => {
     const { id } = await request.json();
     db.delete(campaigns).where(eq(campaigns.id, id)).run();
     return NextResponse.json({ message: 'Campaign deleted' });
-  } catch {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
+  });
 }

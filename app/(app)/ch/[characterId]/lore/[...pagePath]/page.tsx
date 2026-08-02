@@ -1,8 +1,9 @@
-import { notFound, redirect } from 'next/navigation';
-import { getSession } from '@/lib/auth';
+import { notFound } from 'next/navigation';
 import { db } from '@/lib/db';
-import { characters, campaigns, contentCache } from '@/lib/db/schema';
+import { contentCache } from '@/lib/db/schema';
 import { eq, and } from 'drizzle-orm';
+import { requireCharacterAccess } from '@/lib/character-access';
+import { getLoreIndex } from '@/lib/content/lore-index';
 import { LoreSidebar } from '@/components/lore-sidebar';
 import { LoreContent } from '@/components/lore-content';
 import {
@@ -16,25 +17,7 @@ export default async function LorePage({
   params: Promise<{ characterId: string; pagePath: string[] }>;
 }) {
   const { characterId, pagePath } = await params;
-  const characterIdNum = Number(characterId);
-  if (isNaN(characterIdNum)) notFound();
-  const session = await getSession();
-  if (!session) redirect('/login');
-
-  const character = db
-    .select()
-    .from(characters)
-    .where(eq(characters.id, characterIdNum))
-    .get();
-  if (!character || character.userId !== session.user.id) notFound();
-  if (!character.isApproved) notFound();
-
-  const campaign = db
-    .select()
-    .from(campaigns)
-    .where(eq(campaigns.id, character.campaignId))
-    .get();
-  if (!campaign) notFound();
+  const { campaign } = await requireCharacterAccess(characterId);
 
   const pagePathStr = pagePath.join('/');
 
@@ -53,23 +36,7 @@ export default async function LorePage({
   const isPageVisible = getPageVisibility(campaign.id, pagePathStr);
   const hiddenSectionIds = getHiddenSectionIds(campaign.id, pagePathStr);
 
-  const pages = db
-    .select({
-      pagePath: contentCache.pagePath,
-      frontmatter: contentCache.frontmatter,
-    })
-    .from(contentCache)
-    .where(eq(contentCache.campaignId, campaign.id))
-    .all()
-    .map((p) => {
-      const fm = JSON.parse(p.frontmatter);
-      const parts = p.pagePath.split('/');
-      return {
-        path: p.pagePath,
-        title: (fm.title as string) || parts[parts.length - 1],
-        category: parts.length > 1 ? parts[0] : undefined,
-      };
-    });
+  const pages = getLoreIndex(campaign.id);
 
   const fm = JSON.parse(cached.frontmatter);
 

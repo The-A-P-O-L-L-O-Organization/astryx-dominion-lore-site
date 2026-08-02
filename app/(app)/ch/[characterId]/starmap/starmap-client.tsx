@@ -4,29 +4,16 @@ import { useState } from 'react';
 import { GalaxyView } from '@/components/starmap/galaxy-view';
 import { SystemView } from '@/components/starmap/system-view';
 import { PlanetSurfaceView } from '@/components/starmap/planet-surface-view';
+import type { CelestialBody, StarMapConfig } from '@/lib/starmap/types';
 
 type View = 'galaxy' | 'system' | 'planet';
-type CelestialBody = {
-  type: string;
-  name: string;
-  color: string;
-  orbit_radius?: number;
-  orbit_speed?: number;
-  terrain_type?: string;
-  star_type?: string;
-  belt_width?: number;
-  belt_density?: number;
-  parent_id?: string;
-  markers?: any[];
-  pagePath: string;
-};
 
 export function StarmapClient({
   config,
   bodies,
   campaignName,
 }: {
-  config: any;
+  config: StarMapConfig;
   bodies: CelestialBody[];
   campaignName: string;
 }) {
@@ -36,14 +23,7 @@ export function StarmapClient({
     null,
   );
 
-  const systems = (config.systems || []) as Array<{
-    id: string;
-    name: string;
-    x: number;
-    y: number;
-    z: number;
-    star: { color: string; size: number; star_type: string };
-  }>;
+  const systems = config.systems || [];
 
   function handleSelectSystem(id: string) {
     setSelectedSystemId(id);
