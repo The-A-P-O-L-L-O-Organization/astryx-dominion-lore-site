@@ -13,7 +13,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
-import { THEME_LABELS } from '@/lib/themes';
+import { themeLabel } from '@/lib/themes';
 import {
   Select,
   SelectContent,
@@ -159,10 +159,7 @@ export function CharacterList({
                   <SelectContent>
                     {visibleCampaigns.map((c) => (
                       <SelectItem key={c.id} value={String(c.id)}>
-                        {c.name} (
-                        {THEME_LABELS[c.theme as keyof typeof THEME_LABELS] ??
-                          c.theme}
-                        )
+                        {c.name} ({themeLabel(c.theme)})
                       </SelectItem>
                     ))}
                   </SelectContent>

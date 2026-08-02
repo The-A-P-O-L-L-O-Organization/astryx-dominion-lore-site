@@ -3,6 +3,7 @@ import {
   THEMES,
   THEME_LABELS,
   isTheme,
+  themeLabel,
   DEFAULT_THEME,
   coerceTheme,
 } from '@/lib/themes';
@@ -51,5 +52,12 @@ describe('lib/themes', () => {
     expect(coerceTheme('ocean')).toBe('techno');
     expect(coerceTheme('sci-fi')).toBe('techno');
     expect(coerceTheme(undefined)).toBe('techno');
+  });
+
+  it('labels known themes and falls back to the raw string otherwise', () => {
+    expect(themeLabel('techno')).toBe('Techno');
+    expect(themeLabel('void')).toBe('Void');
+    expect(themeLabel('sci-fi')).toBe('sci-fi');
+    expect(themeLabel('toString')).toBe('toString');
   });
 });
