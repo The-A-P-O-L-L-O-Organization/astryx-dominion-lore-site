@@ -22,11 +22,6 @@ export function isAuthError(err: unknown): boolean {
   );
 }
 
-/**
- * Maps a thrown error to a response: authentication failures become 401,
- * malformed input becomes 400, and anything else is logged and becomes a 500
- * instead of being reported as an authentication failure.
- */
 export function errorResponse(context: string, err: unknown): NextResponse {
   if (isAuthError(err)) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });

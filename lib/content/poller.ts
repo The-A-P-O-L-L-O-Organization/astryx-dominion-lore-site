@@ -217,10 +217,6 @@ export interface PollResult {
   failures: PollFailure[];
 }
 
-/**
- * Polls every campaign. A failing campaign does not abort the run, but its
- * failure is reported back to the caller rather than only logged.
- */
 export async function pollAllCampaigns(): Promise<PollResult> {
   const allCampaigns = db.select().from(campaigns).all();
   await mkdir(CONTENT_DIR, { recursive: true });
