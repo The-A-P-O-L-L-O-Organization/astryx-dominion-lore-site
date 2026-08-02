@@ -21,7 +21,7 @@ export const campaigns = sqliteTable('campaigns', {
   name: text('name').notNull(),
   description: text('description').notNull().default(''),
   loreRepoUrl: text('lore_repo_url').notNull(),
-  theme: text('theme').notNull().default('sci-fi'),
+  theme: text('theme').notNull().default('techno'),
   isHidden: integer('is_hidden', { mode: 'boolean' }).notNull().default(false),
   starMapConfig: text('star_map_config').notNull().default('{}'),
   createdAt: text('created_at').notNull().default("datetime('now')"),

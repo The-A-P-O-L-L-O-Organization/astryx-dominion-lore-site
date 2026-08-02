@@ -18,7 +18,7 @@ export const schemaDdl = `
     name TEXT NOT NULL,
     description TEXT NOT NULL DEFAULT '',
     lore_repo_url TEXT NOT NULL,
-    theme TEXT NOT NULL DEFAULT 'sci-fi',
+    theme TEXT NOT NULL DEFAULT 'techno',
     is_hidden INTEGER NOT NULL DEFAULT 0,
     star_map_config TEXT NOT NULL DEFAULT '{}',
     created_at TEXT NOT NULL DEFAULT (datetime('now'))
