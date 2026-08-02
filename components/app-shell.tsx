@@ -2,6 +2,7 @@
 
 import { type CharacterNav, AppSidebar } from '@/components/app-sidebar';
 import { SiteHeader } from '@/components/site-header';
+import { ThemeController } from '@/components/theme-controller';
 import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar';
 
 interface AppShellProps {
@@ -26,6 +27,7 @@ export function AppShell({
         } as React.CSSProperties
       }
     >
+      <ThemeController characters={characters} />
       <AppSidebar
         characters={characters}
         isAdmin={isAdmin}

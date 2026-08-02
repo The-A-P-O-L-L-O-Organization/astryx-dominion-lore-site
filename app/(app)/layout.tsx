@@ -3,7 +3,7 @@ import { redirect } from 'next/navigation';
 import { AppShell } from '@/components/app-shell';
 import { getSession } from '@/lib/auth';
 import { db } from '@/lib/db/index';
-import { characters } from '@/lib/db/schema';
+import { campaigns, characters } from '@/lib/db/schema';
 import { eq } from 'drizzle-orm';
 
 export const dynamic = 'force-dynamic';
@@ -17,8 +17,13 @@ export default async function AppLayout({
   if (!session) redirect('/login');
 
   const userCharacters = db
-    .select({ id: characters.id, name: characters.name })
+    .select({
+      id: characters.id,
+      name: characters.name,
+      theme: campaigns.theme,
+    })
     .from(characters)
+    .innerJoin(campaigns, eq(characters.campaignId, campaigns.id))
     .where(eq(characters.userId, session.user.id))
     .all();
 

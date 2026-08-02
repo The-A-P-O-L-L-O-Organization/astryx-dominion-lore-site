@@ -41,6 +41,7 @@ import { cn } from '@/lib/utils';
 export interface CharacterNav {
   id: number;
   name: string;
+  theme: string;
 }
 
 interface AppSidebarProps {
