@@ -10,7 +10,7 @@ A lore browsing website for D&D sci-fi campaign Astryx Dominion. DMs write markd
 - **Session notes** — shared session logs for all players and DM-only prep notes, synced bidirectionally with git
 - **3D Star Map** — three zoom levels (galaxy → star system → planet surface) rendered with Three.js, configure systems, hyperlanes, orbital bodies, and surface markers in `star_map_config`
 - **Admin panel** — campaign CRUD, character approval/rejection, visibility toggles per page and per section, session notes management, dashboard with stats
-- **Theme system** — per-campaign CSS variables, ships with sci-fi and fantasy themes, extensible
+- **Theme system** — per-campaign CSS variables, ships with six dark themes (techno, ember, cyber, forest, arctic, void), extensible
 - **Git content pipeline** — cron-based poller clones/pulls repos, parses markdown frontmatter + sections + planet data into the database
 
 ## Tech Stack
@@ -68,7 +68,7 @@ Each campaign links to a git repo containing lore content. Create a campaign in 
 - **Name** — display name for the campaign
 - **Description** — shown on the character selection page
 - **Lore repo URL** — git clone URL for the content repository
-- **Theme** — CSS theme to apply (`sci-fi`, `fantasy`, or custom)
+- **Theme** — CSS theme to apply (`techno`, `ember`, `cyber`, `forest`, `arctic`, `void`, or custom)
 - **Star map config** — JSON defining galaxy systems, hyperlanes, and star properties (see Star Map section)
 - **Hidden** — if enabled, the campaign is not visible to players
 
@@ -202,14 +202,18 @@ Hidden sections are blurred client-side with: "This section is locked. Continue 
 
 ## Theme System
 
-Themes are defined as CSS variable blocks in `globals.css` under `[data-theme="..."]` selectors. The active theme is set on `<body>` via a client-side effect based on the campaign's `theme` field.
+Themes are defined as CSS variable blocks in `globals.css` under `.dark[data-theme="..."]` selectors. The active theme is set as `data-theme` on `<html>` by a client-side controller based on the active character's campaign `theme` field. All themes are dark.
 
 Built-in themes:
 
-- `sci-fi` — dark theme with cyan/teal accents (default)
-- `fantasy` — light theme with warm parchment tones and rust accents
+- `techno` — dark blue with cyan accents and amber highlights (default)
+- `ember` — warm gold and flame
+- `cyber` — near-black with phosphor green
+- `forest` — emerald and moss
+- `arctic` — glacial blue and frost
+- `void` — violet and magenta
 
-Add new themes by adding a `[data-theme="your-theme"]` block in `globals.css`.
+Add new themes by adding a `.dark[data-theme="your-theme"]` block in `globals.css` and registering the key in `lib/themes.ts`.
 
 ## API Routes
 
