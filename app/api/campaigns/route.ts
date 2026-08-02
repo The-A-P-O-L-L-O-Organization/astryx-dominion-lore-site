@@ -24,7 +24,7 @@ export async function POST(request: Request) {
         name: body.name,
         description: body.description || '',
         loreRepoUrl: body.loreRepoUrl,
-        theme: body.theme == null ? body.theme : coerceTheme(body.theme),
+        theme: body.theme == null ? undefined : coerceTheme(body.theme),
         isHidden: body.isHidden || false,
         starMapConfig: body.starMapConfig || '{}',
       })
@@ -39,7 +39,7 @@ export async function PUT(request: Request) {
   try {
     await requireAdmin();
     const body = await request.json();
-    const theme = body.theme == null ? body.theme : coerceTheme(body.theme);
+    const theme = body.theme == null ? undefined : coerceTheme(body.theme);
     db.update(campaigns)
       .set({
         name: body.name,

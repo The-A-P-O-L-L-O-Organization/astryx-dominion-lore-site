@@ -223,4 +223,27 @@ describe('POST /api/campaigns theme validation', () => {
     const c = db.select().from(schema.campaigns).get()!;
     expect(c.theme).toBe('forest');
   });
+
+  it('does not change theme when theme is null on update', async () => {
+    db.insert(schema.campaigns)
+      .values({ name: 'Forest', loreRepoUrl: 'x', theme: 'forest' })
+      .run();
+    const req = new Request('http://localhost/api/campaigns', {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        id: 1,
+        name: 'Forest',
+        loreRepoUrl: 'x',
+        description: '',
+        theme: null,
+        isHidden: false,
+        starMapConfig: '{}',
+      }),
+    });
+    const res = await PUT(req);
+    expect(res.status).toBe(200);
+    const c = db.select().from(schema.campaigns).get()!;
+    expect(c.theme).toBe('forest');
+  });
 });
