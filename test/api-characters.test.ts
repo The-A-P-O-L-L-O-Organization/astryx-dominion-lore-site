@@ -12,7 +12,7 @@ vi.mock('@/lib/db', async () => {
   const sqlite = new Database(':memory:');
   sqlite.exec(`
     CREATE TABLE users (id INTEGER PRIMARY KEY, username TEXT NOT NULL UNIQUE, password_hash TEXT NOT NULL, role TEXT NOT NULL DEFAULT 'player', created_at TEXT NOT NULL DEFAULT (datetime('now')));
-    CREATE TABLE campaigns (id INTEGER PRIMARY KEY, name TEXT NOT NULL, description TEXT NOT NULL DEFAULT '', lore_repo_url TEXT NOT NULL DEFAULT '', theme TEXT NOT NULL DEFAULT 'sci-fi', is_hidden INTEGER NOT NULL DEFAULT 0, star_map_config TEXT NOT NULL DEFAULT '{}', created_at TEXT NOT NULL DEFAULT (datetime('now')));
+    CREATE TABLE campaigns (id INTEGER PRIMARY KEY, name TEXT NOT NULL, description TEXT NOT NULL DEFAULT '', lore_repo_url TEXT NOT NULL DEFAULT '', theme TEXT NOT NULL DEFAULT 'techno', is_hidden INTEGER NOT NULL DEFAULT 0, star_map_config TEXT NOT NULL DEFAULT '{}', created_at TEXT NOT NULL DEFAULT (datetime('now')));
     CREATE TABLE characters (id INTEGER PRIMARY KEY, user_id INTEGER NOT NULL, campaign_id INTEGER NOT NULL, name TEXT NOT NULL, info TEXT NOT NULL DEFAULT '', is_approved INTEGER NOT NULL DEFAULT 0, created_at TEXT NOT NULL DEFAULT (datetime('now')));
   `);
   return { db: drizzle(sqlite, { schema: schemaMod }) };
