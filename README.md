@@ -273,7 +273,8 @@ components/
 ├── ui/                 -- shadcn/ui components
 ├── lore-sidebar.tsx    -- Grouped, collapsible page navigation
 ├── lore-content.tsx    -- Content renderer with blur gating
-├── theme-provider.tsx  -- Sets data-theme on body
+├── theme-provider.tsx  -- Adds dark class to <html>
+├── theme-controller.tsx  -- Sets data-theme on <html> from active character's theme
 └── starmap/            -- Three.js star map components
 
 lib/
