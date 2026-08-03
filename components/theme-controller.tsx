@@ -4,7 +4,7 @@ import { useEffect } from 'react';
 import { usePathname } from 'next/navigation';
 
 import { type CharacterNav } from '@/components/app-sidebar';
-import { isTheme } from '@/lib/themes';
+import { DEFAULT_THEME, isTheme } from '@/lib/themes';
 
 export function ThemeController({
   characters,
@@ -21,7 +21,7 @@ export function ThemeController({
       if (character && isTheme(character.theme)) theme = character.theme;
     }
     const el = document.documentElement;
-    if (theme) el.dataset.theme = theme;
+    if (theme && theme !== DEFAULT_THEME) el.dataset.theme = theme;
     else delete el.dataset.theme;
   }, [pathname, characters]);
 
