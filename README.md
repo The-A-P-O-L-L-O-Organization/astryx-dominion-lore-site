@@ -68,7 +68,7 @@ Each campaign links to a git repo containing lore content. Create a campaign in 
 - **Name** — display name for the campaign
 - **Description** — shown on the character selection page
 - **Lore repo URL** — git clone URL for the content repository
-- **Theme** — CSS theme to apply (`techno`, `ember`, `cyber`, `forest`, `arctic`, `void`, or custom)
+- **Theme** — CSS theme to apply (`techno`, `ember`, `cyber`, `forest`, `arctic`, `void`); unknown values are coerced to `techno` unless registered as a new theme in `lib/themes.ts`
 - **Star map config** — JSON defining galaxy systems, hyperlanes, and star properties (see Star Map section)
 - **Hidden** — if enabled, the campaign is not visible to players
 
