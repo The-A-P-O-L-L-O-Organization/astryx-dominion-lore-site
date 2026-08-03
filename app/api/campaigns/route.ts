@@ -24,7 +24,7 @@ export async function POST(request: Request) {
         name: body.name,
         description: body.description || '',
         loreRepoUrl: body.loreRepoUrl,
-        theme: body.theme == null ? undefined : coerceTheme(body.theme),
+        theme: coerceTheme(body.theme),
         isHidden: body.isHidden || false,
         starMapConfig: body.starMapConfig || '{}',
       })

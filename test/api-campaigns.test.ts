@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { GET, POST, PUT, DELETE } from '@/app/api/campaigns/route';
 import { THEMES } from '@/lib/themes';
 
@@ -27,6 +27,23 @@ import * as schema from '@/lib/db/schema';
 import { db } from '@/lib/db';
 import { requireAdmin } from '@/lib/auth';
 
+const originalInsert = db.insert.bind(db);
+let insertSpy: ReturnType<typeof vi.spyOn> | undefined;
+
+function captureInsertValues() {
+  const calls: any[] = [];
+  insertSpy = vi.spyOn(db, 'insert').mockImplementation((table: any) => {
+    const builder = originalInsert(table);
+    const originalValues = builder.values.bind(builder);
+    builder.values = (values: any) => {
+      calls.push(values);
+      return originalValues(values);
+    };
+    return builder;
+  });
+  return calls;
+}
+
 describe('GET /api/campaigns', () => {
   beforeEach(() => {
     db.delete(schema.campaigns).run();
@@ -52,6 +69,11 @@ describe('POST /api/campaigns', () => {
   beforeEach(() => {
     db.delete(schema.campaigns).run();
     vi.clearAllMocks();
+  });
+
+  afterEach(() => {
+    insertSpy?.mockRestore();
+    insertSpy = undefined;
   });
 
   it('rejects non-admin', async () => {
@@ -85,6 +107,29 @@ describe('POST /api/campaigns', () => {
     const c = db.select().from(schema.campaigns).get()!;
     expect(c.theme).toBe('techno');
     expect(c.isHidden).toBe(false);
+  });
+
+  it('passes a concrete default theme to the insert when theme is omitted on create', async () => {
+    const calls = captureInsertValues();
+    const req = new Request('http://localhost/api/campaigns', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name: 'NoTheme', loreRepoUrl: 'git:...' }),
+    });
+    await POST(req);
+    expect(calls).toHaveLength(1);
+    expect(calls[0].theme).toBe('techno');
+  });
+
+  it('passes a concrete default theme to the insert when theme is null on create', async () => {
+    const calls = captureInsertValues();
+    const req = new Request('http://localhost/api/campaigns', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name: 'NullTheme', loreRepoUrl: 'git:...', theme: null }),
+    });
+    await POST(req);
+    expect(calls[0].theme).toBe('techno');
   });
 });
 
