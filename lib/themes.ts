@@ -28,3 +28,13 @@ export const DEFAULT_THEME = THEMES[0];
 
 export const coerceTheme = (v: unknown): Theme =>
   isTheme(v) ? v : DEFAULT_THEME;
+
+export const resolveThemeForPath = (
+  pathname: string,
+  characters: { id: number; theme: string }[],
+): Theme => {
+  const match = pathname.match(/^\/ch\/(\d+)(?=\/|$)/);
+  if (!match) return DEFAULT_THEME;
+  const character = characters.find((c) => c.id === Number(match[1]));
+  return character ? coerceTheme(character.theme) : DEFAULT_THEME;
+};

@@ -6,6 +6,7 @@ import {
   themeLabel,
   DEFAULT_THEME,
   coerceTheme,
+  resolveThemeForPath,
 } from '@/lib/themes';
 
 describe('lib/themes', () => {
@@ -59,5 +60,30 @@ describe('lib/themes', () => {
     expect(themeLabel('void')).toBe('Void');
     expect(themeLabel('sci-fi')).toBe('sci-fi');
     expect(themeLabel('toString')).toBe('toString');
+  });
+});
+
+describe('resolveThemeForPath', () => {
+  const characters = [
+    { id: 1, name: 'Hero', theme: 'ember' },
+    { id: 2, name: 'Mage', theme: 'ocean' },
+  ];
+
+  it('returns the default theme for paths without a /ch/ prefix', () => {
+    expect(resolveThemeForPath('/characters', characters)).toBe(DEFAULT_THEME);
+    expect(resolveThemeForPath('/', characters)).toBe(DEFAULT_THEME);
+  });
+
+  it('returns the default theme when the character id is not in the list', () => {
+    expect(resolveThemeForPath('/ch/99/lore', characters)).toBe(DEFAULT_THEME);
+  });
+
+  it('returns the character theme when it is valid', () => {
+    expect(resolveThemeForPath('/ch/1', characters)).toBe('ember');
+    expect(resolveThemeForPath('/ch/1/lore', characters)).toBe('ember');
+  });
+
+  it('returns the default theme when the stored value is not a valid theme', () => {
+    expect(resolveThemeForPath('/ch/2/starmap', characters)).toBe(DEFAULT_THEME);
   });
 });
