@@ -126,7 +126,11 @@ describe('POST /api/campaigns', () => {
     const req = new Request('http://localhost/api/campaigns', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ name: 'NullTheme', loreRepoUrl: 'git:...', theme: null }),
+      body: JSON.stringify({
+        name: 'NullTheme',
+        loreRepoUrl: 'git:...',
+        theme: null,
+      }),
     });
     await POST(req);
     expect(calls[0].theme).toBe('techno');

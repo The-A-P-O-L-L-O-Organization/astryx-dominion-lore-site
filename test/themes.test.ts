@@ -84,6 +84,8 @@ describe('resolveThemeForPath', () => {
   });
 
   it('returns the default theme when the stored value is not a valid theme', () => {
-    expect(resolveThemeForPath('/ch/2/starmap', characters)).toBe(DEFAULT_THEME);
+    expect(resolveThemeForPath('/ch/2/starmap', characters)).toBe(
+      DEFAULT_THEME,
+    );
   });
 });
