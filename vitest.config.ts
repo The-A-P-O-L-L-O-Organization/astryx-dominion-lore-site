@@ -12,6 +12,12 @@ export default defineConfig({
       '**/dist/**',
       '**/coverage/**',
     ],
+    coverage: {
+      provider: 'v8',
+      reporter: ['text', 'html'],
+      include: ['app/api/**/*.ts', 'hooks/**/*.ts', 'lib/**/*.ts'],
+      exclude: ['lib/db/migrate.ts', 'lib/db/schema-ddl.ts'],
+    },
   },
   resolve: {
     alias: {

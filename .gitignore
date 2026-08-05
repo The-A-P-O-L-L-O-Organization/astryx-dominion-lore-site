@@ -6,7 +6,7 @@ node_modules/
 /content/
 data/
 package-lock.json
-
 .superpowers/
 docs/superpowers/
 .worktrees/
+coverage/
