@@ -1,9 +1,8 @@
 'use client';
 
-import { useCallback, useState, FormEvent } from 'react';
+import { useEffect, useState, FormEvent } from 'react';
 import { useRouter } from 'next/navigation';
-import { fetchJson, requestJson } from '@/lib/api-client';
-import { useAsyncData } from '@/hooks/use-async-data';
+import { apiFetch, apiJson, errorMessage } from '@/lib/api-client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -47,34 +46,73 @@ const EMPTY_FORM: CampaignForm = {
 };
 
 export default function AdminCampaignsPage() {
+  const [campaigns, setCampaigns] = useState<Campaign[]>([]);
   const [showNew, setShowNew] = useState(false);
   const [editId, setEditId] = useState<number | null>(null);
   const [form, setForm] = useState(EMPTY_FORM);
+  const [error, setError] = useState('');
   const router = useRouter();
 
-  const fetchCampaigns = useCallback(
-    () => fetchJson<Campaign[]>('/api/campaigns'),
-    [],
-  );
-  const { data: campaigns, reload } = useAsyncData<Campaign[]>(
-    fetchCampaigns,
-    [],
-  );
+  async function fetchCampaigns() {
+    return apiJson<Campaign[]>('/api/campaigns');
+  }
+
+  async function load() {
+    try {
+      setCampaigns(await fetchCampaigns());
+      setError('');
+    } catch (err) {
+      setError(errorMessage(err, 'Failed to load campaigns'));
+    }
+  }
+
+  useEffect(() => {
+    let ignore = false;
+    fetchCampaigns()
+      .then((data) => {
+        if (!ignore) setCampaigns(data);
+      })
+      .catch((err) => {
+        if (!ignore) setError(errorMessage(err, 'Failed to load campaigns'));
+      });
+    return () => {
+      ignore = true;
+    };
+  }, []);
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
+    const method = editId ? 'PUT' : 'POST';
     const body = editId ? { id: editId, ...form } : form;
-    await requestJson('/api/campaigns', editId ? 'PUT' : 'POST', body);
+    try {
+      await apiFetch('/api/campaigns', {
+        method,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+      });
+    } catch (err) {
+      setError(errorMessage(err, 'Failed to save campaign'));
+      return;
+    }
     setShowNew(false);
     setEditId(null);
     setForm(EMPTY_FORM);
-    reload();
+    load();
   }
 
   async function handleDelete(id: number) {
     if (!confirm('Delete this campaign?')) return;
-    await requestJson('/api/campaigns', 'DELETE', { id });
-    reload();
+    try {
+      await apiFetch('/api/campaigns', {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id }),
+      });
+    } catch (err) {
+      setError(errorMessage(err, 'Failed to delete campaign'));
+      return;
+    }
+    load();
   }
 
   function startEdit(c: Campaign) {
@@ -108,6 +146,8 @@ export default function AdminCampaignsPage() {
           New Campaign
         </Button>
       </div>
+
+      {error && <p className="text-sm text-destructive">{error}</p>}
 
       {(showNew || editId) && (
         <Card className="mb-6">

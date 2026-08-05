@@ -14,6 +14,7 @@ import { byCampaignPage } from '@/lib/db/filters';
 import { parseMarkdownFile, parseSessionNoteFile } from './parser';
 import { isAllowedRepoUrl } from './repo-url';
 import simpleGit from 'simple-git';
+import { parseJsonOrThrow } from '@/lib/json';
 
 const CONTENT_DIR = process.env.CONTENT_DIR || '/data/repos';
 
@@ -60,7 +61,14 @@ async function parseContentDir(
       await parseContentDir(fullPath, campaignId, `${prefix}${entry.name}/`);
     } else if (entry.name.endsWith('.md')) {
       const content = await readFile(fullPath, 'utf-8');
-      const parsed = parseMarkdownFile(`${prefix}${entry.name}`, content);
+      let parsed;
+      try {
+        parsed = parseMarkdownFile(`${prefix}${entry.name}`, content);
+      } catch (err) {
+        throw new Error(`Failed to parse markdown file ${fullPath}`, {
+          cause: err,
+        });
+      }
       const data = {
         campaignId,
         pagePath: parsed.pagePath,
@@ -121,8 +129,16 @@ async function parseSessionNotesDir(dir: string, campaignId: number) {
   const entries = await readdir(dir, { withFileTypes: true });
   for (const entry of entries) {
     if (entry.isFile() && entry.name.endsWith('.md')) {
-      const content = await readFile(path.join(dir, entry.name), 'utf-8');
-      const parsed = parseSessionNoteFile(content);
+      const notePath = path.join(dir, entry.name);
+      const content = await readFile(notePath, 'utf-8');
+      let parsed;
+      try {
+        parsed = parseSessionNoteFile(content);
+      } catch (err) {
+        throw new Error(`Failed to parse session note ${notePath}`, {
+          cause: err,
+        });
+      }
       const slug = parsed.slug || entry.name.replace(/\.md$/, '');
 
       const data = {
@@ -152,7 +168,7 @@ async function parsePlanetDataDir(dir: string, campaignId: number) {
       const markersPath = path.join(dir, entry.name, 'markers.json');
       if (existsSync(markersPath)) {
         const markersContent = await readFile(markersPath, 'utf-8');
-        const markers = JSON.parse(markersContent);
+        const markers = parseJsonOrThrow(markersContent, markersPath);
         const pagePath = `planets/${entry.name}`;
         const existing = db
           .select()
@@ -160,7 +176,12 @@ async function parsePlanetDataDir(dir: string, campaignId: number) {
           .where(byCampaignPage(contentCache, campaignId, pagePath))
           .get();
         if (existing) {
-          const pd = existing.planetData ? JSON.parse(existing.planetData) : {};
+          const pd = existing.planetData
+            ? parseJsonOrThrow(
+                existing.planetData,
+                `planet_data for ${pagePath}`,
+              )
+            : {};
           db.update(contentCache)
             .set({
               planetData: JSON.stringify({ ...pd, markers }),
@@ -174,14 +195,32 @@ async function parsePlanetDataDir(dir: string, campaignId: number) {
   }
 }
 
-export async function pollAllCampaigns(): Promise<void> {
+export interface PollFailure {
+  campaignId: number;
+  campaignName: string;
+  error: string;
+}
+
+export interface PollResult {
+  polled: number;
+  failures: PollFailure[];
+}
+
+export async function pollAllCampaigns(): Promise<PollResult> {
   const allCampaigns = db.select().from(campaigns).all();
   await mkdir(CONTENT_DIR, { recursive: true });
+  const failures: PollFailure[] = [];
   for (const campaign of allCampaigns) {
     try {
       await pollCampaign(campaign);
     } catch (err) {
       console.error(`Failed to poll campaign ${campaign.id}:`, err);
+      failures.push({
+        campaignId: campaign.id,
+        campaignName: campaign.name,
+        error: err instanceof Error ? err.message : String(err),
+      });
     }
   }
+  return { polled: allCampaigns.length - failures.length, failures };
 }

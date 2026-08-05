@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { pollAllCampaigns } from '@/lib/content/poller';
 import { requireAdmin } from '@/lib/auth';
-import { jsonError, unauthorized } from '@/lib/api/responses';
+import { errorResponse, isAuthError } from '@/lib/api-errors';
 
 export async function GET(request: Request) {
   try {
@@ -12,15 +12,29 @@ export async function GET(request: Request) {
       try {
         await requireAdmin();
         isAdmin = true;
-      } catch {}
+      } catch (err) {
+        if (!isAuthError(err)) throw err;
+      }
       if (header !== secret && !isAdmin) {
-        return unauthorized();
+        return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
       }
     }
-    await pollAllCampaigns();
-    return NextResponse.json({ message: 'Content polled successfully' });
+    const { polled, failures } = await pollAllCampaigns();
+    if (failures.length > 0) {
+      return NextResponse.json(
+        {
+          message: `Polled ${polled} campaign(s), ${failures.length} failed`,
+          polled,
+          failures,
+        },
+        { status: 207 },
+      );
+    }
+    return NextResponse.json({
+      message: 'Content polled successfully',
+      polled,
+    });
   } catch (err) {
-    console.error('Poll error:', err);
-    return jsonError('Poll failed', 500);
+    return errorResponse('GET /api/poll-content', err);
   }
 }

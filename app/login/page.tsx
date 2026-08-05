@@ -3,7 +3,6 @@
 import { useState, FormEvent } from 'react';
 import { useRouter } from 'next/navigation';
 import { Orbit } from 'lucide-react';
-import { requestJson } from '@/lib/api-client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -15,6 +14,7 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 import Link from 'next/link';
+import { apiFetch, errorMessage } from '@/lib/api-client';
 
 export default function LoginPage() {
   const [username, setUsername] = useState('');
@@ -26,15 +26,14 @@ export default function LoginPage() {
     e.preventDefault();
     setError('');
     try {
-      const { ok, data } = await requestJson<{ error?: string }>(
-        '/api/auth/login',
-        'POST',
-        { username, password },
-      );
-      if (!ok) return setError(data.error || 'Login failed');
+      await apiFetch('/api/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username, password }),
+      });
       router.push('/characters');
-    } catch {
-      return setError('Network error — please try again');
+    } catch (err) {
+      return setError(errorMessage(err, 'Login failed'));
     }
     router.refresh();
   }

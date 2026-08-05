@@ -2,8 +2,15 @@ import { NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { characters, campaigns } from '@/lib/db/schema';
 import { requireAuth, requireAdmin } from '@/lib/auth';
-import { notFound, withGuard } from '@/lib/api/responses';
+import { notFound } from '@/lib/api/responses';
 import { eq } from 'drizzle-orm';
+import {
+  errorResponse,
+  optionalString,
+  parseJsonBody,
+  requireNumber,
+  requireString,
+} from '@/lib/api-errors';
 
 export async function GET() {
   try {
@@ -17,23 +24,17 @@ export async function GET() {
             .where(eq(characters.userId, user.id))
             .all();
     return NextResponse.json(all);
-  } catch {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  } catch (err) {
+    return errorResponse('GET /api/characters', err);
   }
 }
 
 export async function POST(request: Request) {
-  return withGuard(requireAuth, async ({ user }) => {
-    const body = await request.json();
-
-    const campaignId = Number(body.campaignId);
-    const name = typeof body.name === 'string' ? body.name.trim() : '';
-    if (!Number.isInteger(campaignId) || !name) {
-      return NextResponse.json(
-        { error: 'campaignId and name required' },
-        { status: 400 },
-      );
-    }
+  try {
+    const { user } = await requireAuth();
+    const body = await parseJsonBody(request);
+    const campaignId = requireNumber(body, 'campaignId');
+    const name = requireString(body, 'name');
 
     const campaign = db
       .select()
@@ -50,31 +51,44 @@ export async function POST(request: Request) {
         userId: user.id,
         campaignId,
         name,
-        info: typeof body.info === 'string' ? body.info : '',
+        info: optionalString(body, 'info'),
       })
       .run();
     return NextResponse.json(
       { message: 'Character created. Waiting for admin approval.' },
       { status: 201 },
     );
-  });
+  } catch (err) {
+    return errorResponse('POST /api/characters', err);
+  }
 }
 
 export async function PUT(request: Request) {
-  return withGuard(requireAdmin, async () => {
-    const body = await request.json();
+  try {
+    await requireAdmin();
+    const body = await parseJsonBody(request);
     db.update(characters)
-      .set({ isApproved: body.isApproved })
-      .where(eq(characters.id, body.id))
+      .set({
+        isApproved:
+          body.isApproved === undefined ? undefined : !!body.isApproved,
+      })
+      .where(eq(characters.id, requireNumber(body, 'id')))
       .run();
     return NextResponse.json({ message: 'Character updated' });
-  });
+  } catch (err) {
+    return errorResponse('PUT /api/characters', err);
+  }
 }
 
 export async function DELETE(request: Request) {
-  return withGuard(requireAdmin, async () => {
-    const { id } = await request.json();
-    db.delete(characters).where(eq(characters.id, id)).run();
+  try {
+    await requireAdmin();
+    const body = await parseJsonBody(request);
+    db.delete(characters)
+      .where(eq(characters.id, requireNumber(body, 'id')))
+      .run();
     return NextResponse.json({ message: 'Character deleted' });
-  });
+  } catch (err) {
+    return errorResponse('DELETE /api/characters', err);
+  }
 }

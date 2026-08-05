@@ -1,13 +1,12 @@
 'use client';
 
-import { useState, use, useCallback } from 'react';
+import { useEffect, useState, use, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
-import { fetchJson, requestJson } from '@/lib/api-client';
-import { useAsyncData } from '@/hooks/use-async-data';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { ChevronDown, ChevronRight } from 'lucide-react';
+import { apiFetch, apiJson, errorMessage } from '@/lib/api-client';
 
 interface PageRow {
   pagePath: string;
@@ -26,30 +25,23 @@ interface CampaignRow {
   name: string;
 }
 
-interface VisibilityResponse {
-  pages: PageRow[];
-  sections: SectionRow[];
-}
-
-interface VisibilityView {
-  name: string;
-  pages: PageRow[];
-}
-
 export default function AdminVisibilityPage({
   params,
 }: {
   params: Promise<{ campaignId: string }>;
 }) {
   const { campaignId } = use(params);
+  const [campaignName, setCampaignName] = useState('');
+  const [pages, setPages] = useState<PageRow[]>([]);
   const [expandedPages, setExpandedPages] = useState<Set<string>>(new Set());
+  const [error, setError] = useState('');
   const router = useRouter();
 
-  const fetchData = useCallback(async (): Promise<VisibilityView> => {
-    const camps = await fetchJson<CampaignRow[]>('/api/campaigns');
+  const fetchData = useCallback(async () => {
+    const camps = await apiJson<CampaignRow[]>('/api/campaigns');
     const camp = camps.find((c) => c.id === Number(campaignId));
 
-    const vis = await fetchJson<VisibilityResponse>(
+    const vis = await apiJson<{ pages: PageRow[]; sections: SectionRow[] }>(
       `/api/visibility?campaignId=${campaignId}`,
     );
 
@@ -64,19 +56,52 @@ export default function AdminVisibilityPage({
     return { name: camp?.name || '', pages: Array.from(pageMap.values()) };
   }, [campaignId]);
 
-  const {
-    data: { name: campaignName, pages },
-    reload,
-  } = useAsyncData<VisibilityView>(fetchData, { name: '', pages: [] });
+  async function load() {
+    try {
+      const { name, pages } = await fetchData();
+      setCampaignName(name);
+      setPages(pages);
+      setError('');
+    } catch (err) {
+      setError(errorMessage(err, 'Failed to load visibility settings'));
+    }
+  }
+
+  useEffect(() => {
+    let ignore = false;
+    fetchData()
+      .then(({ name, pages }) => {
+        if (!ignore) {
+          setCampaignName(name);
+          setPages(pages);
+        }
+      })
+      .catch((err) => {
+        if (!ignore)
+          setError(errorMessage(err, 'Failed to load visibility settings'));
+      });
+    return () => {
+      ignore = true;
+    };
+  }, [fetchData]);
 
   async function togglePage(pagePath: string, currentHidden: boolean | number) {
-    await requestJson('/api/visibility', 'PUT', {
-      type: 'page',
-      campaignId: Number(campaignId),
-      pagePath,
-      isHidden: !currentHidden,
-    });
-    reload();
+    try {
+      await apiFetch('/api/visibility', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          type: 'page',
+          campaignId: Number(campaignId),
+          pagePath,
+          isHidden: !currentHidden,
+        }),
+      });
+    } catch (err) {
+      setError(errorMessage(err, 'Failed to update page visibility'));
+      return;
+    }
+    load();
   }
 
   async function toggleSection(
@@ -84,14 +109,23 @@ export default function AdminVisibilityPage({
     sectionId: string,
     currentHidden: boolean | number,
   ) {
-    await requestJson('/api/visibility', 'PUT', {
-      type: 'section',
-      campaignId: Number(campaignId),
-      pagePath,
-      sectionId,
-      isHidden: !currentHidden,
-    });
-    reload();
+    try {
+      await apiFetch('/api/visibility', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          type: 'section',
+          campaignId: Number(campaignId),
+          pagePath,
+          sectionId,
+          isHidden: !currentHidden,
+        }),
+      });
+    } catch (err) {
+      setError(errorMessage(err, 'Failed to update section visibility'));
+      return;
+    }
+    load();
   }
 
   function toggleExpand(pagePath: string) {
@@ -119,6 +153,8 @@ export default function AdminVisibilityPage({
           </p>
         </div>
       </div>
+
+      {error && <p className="text-sm text-destructive">{error}</p>}
 
       <div className="space-y-2">
         {pages.map((page) => (

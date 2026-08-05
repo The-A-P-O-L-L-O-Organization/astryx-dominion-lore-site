@@ -143,6 +143,33 @@ describe('POST /api/campaigns', () => {
     expect(db.select().from(schema.campaigns).all()).toHaveLength(0);
   });
 
+  it('returns 400 when required fields are missing', async () => {
+    const req = new Request('http://localhost/api/campaigns', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ loreRepoUrl: REPO_URL }),
+    });
+    const res = await POST(req);
+    expect(res.status).toBe(400);
+    await expect(res.json()).resolves.toEqual({ error: 'name is required' });
+  });
+
+  it('returns 500 rather than 401 for unexpected failures', async () => {
+    const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    vi.mocked(requireAdmin).mockRejectedValueOnce(
+      new Error('database is gone'),
+    );
+    const req = new Request('http://localhost/api/campaigns', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name: 'C', loreRepoUrl: REPO_URL }),
+    });
+    const res = await POST(req);
+    expect(res.status).toBe(500);
+    expect(consoleSpy).toHaveBeenCalled();
+    consoleSpy.mockRestore();
+  });
+
   it('sets default values', async () => {
     const req = new Request('http://localhost/api/campaigns', {
       method: 'POST',

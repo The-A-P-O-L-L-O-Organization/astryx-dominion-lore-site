@@ -10,6 +10,7 @@ import {
   getPageVisibility,
   getHiddenSectionIds,
 } from '@/lib/content/visibility';
+import { parseJsonOrDefault } from '@/lib/json';
 
 export default async function LorePage({
   params,
@@ -38,7 +39,11 @@ export default async function LorePage({
 
   const pages = getLoreIndex(campaign.id);
 
-  const fm = JSON.parse(cached.frontmatter);
+  const fm = parseJsonOrDefault<{ title?: string }>(
+    cached.frontmatter,
+    `frontmatter for ${pagePathStr}`,
+    {},
+  );
 
   return (
     <div className="flex flex-col gap-6 md:flex-row md:items-start">

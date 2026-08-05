@@ -3,6 +3,7 @@ import { db } from './db/index';
 import { sessions, users } from './db/schema';
 import { eq } from 'drizzle-orm';
 import { cookies } from 'next/headers';
+import { AuthError } from './api-errors';
 
 const SALT_ROUNDS = 10;
 const SESSION_COOKIE = 'session_id';
@@ -89,12 +90,12 @@ export async function requireAuth(): Promise<{
   user: typeof users.$inferSelect;
 }> {
   const session = await getSession();
-  if (!session) throw new Error('Unauthorized');
+  if (!session) throw new AuthError('Unauthorized');
   return session;
 }
 
 export async function requireAdmin(): Promise<typeof users.$inferSelect> {
   const session = await requireAuth();
-  if (session.user.role !== 'admin') throw new Error('Forbidden');
+  if (session.user.role !== 'admin') throw new AuthError('Forbidden');
   return session.user;
 }

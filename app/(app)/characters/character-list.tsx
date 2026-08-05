@@ -2,7 +2,6 @@
 
 import { useState, FormEvent } from 'react';
 import { useRouter } from 'next/navigation';
-import { requestJson } from '@/lib/api-client';
 import { Button } from '@/components/ui/button';
 import {
   Card,
@@ -22,6 +21,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { apiFetch, errorMessage } from '@/lib/api-client';
 
 type Character = {
   id: number;
@@ -59,15 +59,14 @@ export function CharacterList({
     e.preventDefault();
     setError('');
     try {
-      const { ok, data } = await requestJson<{ error?: string }>(
-        '/api/characters',
-        'POST',
-        { name, info, campaignId: Number(campaignId) },
-      );
-      if (!ok) return setError(data.error || 'Failed to create');
+      await apiFetch('/api/characters', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name, info, campaignId: Number(campaignId) }),
+      });
       setShowCreate(false);
-    } catch {
-      return setError('Network error — please try again');
+    } catch (err) {
+      return setError(errorMessage(err, 'Failed to create character'));
     }
     setName('');
     setInfo('');

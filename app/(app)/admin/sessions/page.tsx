@@ -1,8 +1,7 @@
 'use client';
 
-import { useCallback, useState, FormEvent } from 'react';
-import { fetchJson, requestJson } from '@/lib/api-client';
-import { useAsyncData } from '@/hooks/use-async-data';
+import { useEffect, useState, FormEvent } from 'react';
+import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -16,6 +15,7 @@ import {
 } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
+import { apiFetch, apiJson, errorMessage } from '@/lib/api-client';
 
 interface SessionNote {
   id: number;
@@ -32,50 +32,98 @@ interface Campaign {
   name: string;
 }
 
-const EMPTY_FORM = { slug: '', title: '', contentMd: '', isDmOnly: false };
-
 export default function AdminSessionsPage() {
+  const [notes, setNotes] = useState<SessionNote[]>([]);
+  const [campaigns, setCampaigns] = useState<Campaign[]>([]);
   const [selectedCampaign, setSelectedCampaign] = useState('');
   const [showNew, setShowNew] = useState(false);
   const [editId, setEditId] = useState<number | null>(null);
-  const [form, setForm] = useState(EMPTY_FORM);
+  const [form, setForm] = useState({
+    slug: '',
+    title: '',
+    contentMd: '',
+    isDmOnly: false,
+  });
+  const [error, setError] = useState('');
+  const router = useRouter();
 
-  const fetchCampaigns = useCallback(
-    () => fetchJson<Campaign[]>('/api/campaigns'),
-    [],
-  );
-  const { data: campaigns } = useAsyncData<Campaign[]>(fetchCampaigns, []);
+  useEffect(() => {
+    let ignore = false;
+    apiJson<Campaign[]>('/api/campaigns')
+      .then((data) => {
+        if (!ignore) setCampaigns(data);
+      })
+      .catch((err) => {
+        if (!ignore) setError(errorMessage(err, 'Failed to load campaigns'));
+      });
+    return () => {
+      ignore = true;
+    };
+  }, []);
 
-  const fetchNotes = useCallback(
-    () =>
-      selectedCampaign
-        ? fetchJson<SessionNote[]>(
-            `/api/sessions?campaignId=${selectedCampaign}`,
-          )
-        : Promise.resolve([]),
-    [selectedCampaign],
-  );
-  const { data: notes, reload: reloadNotes } = useAsyncData<SessionNote[]>(
-    fetchNotes,
-    [],
-  );
+  async function fetchNotes(campaignId: string) {
+    if (!campaignId) return [];
+    return apiJson<SessionNote[]>(`/api/sessions?campaignId=${campaignId}`);
+  }
+
+  async function loadNotes(campaignId: string) {
+    try {
+      setNotes(await fetchNotes(campaignId));
+      setError('');
+    } catch (err) {
+      setError(errorMessage(err, 'Failed to load session notes'));
+    }
+  }
+
+  useEffect(() => {
+    let ignore = false;
+    fetchNotes(selectedCampaign)
+      .then((data) => {
+        if (!ignore) setNotes(data);
+      })
+      .catch((err) => {
+        if (!ignore)
+          setError(errorMessage(err, 'Failed to load session notes'));
+      });
+    return () => {
+      ignore = true;
+    };
+  }, [selectedCampaign]);
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
     const body = editId
       ? { id: editId, ...form, campaignId: Number(selectedCampaign) }
       : { ...form, campaignId: Number(selectedCampaign) };
-    await requestJson('/api/sessions', editId ? 'PUT' : 'POST', body);
+    try {
+      await apiFetch('/api/sessions', {
+        method: editId ? 'PUT' : 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+      });
+    } catch (err) {
+      setError(errorMessage(err, 'Failed to save session note'));
+      return;
+    }
     setShowNew(false);
     setEditId(null);
-    setForm(EMPTY_FORM);
-    reloadNotes();
+    setForm({ slug: '', title: '', contentMd: '', isDmOnly: false });
+    loadNotes(selectedCampaign);
   }
 
   async function handleDelete(id: number) {
     if (!confirm('Delete this note?')) return;
-    await requestJson('/api/sessions', 'DELETE', { id });
-    reloadNotes();
+    try {
+      await apiFetch('/api/sessions', {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id }),
+      });
+    } catch (err) {
+      setError(errorMessage(err, 'Failed to delete session note'));
+      return;
+    }
+    loadNotes(selectedCampaign);
   }
 
   function startEdit(n: SessionNote) {
@@ -96,6 +144,8 @@ export default function AdminSessionsPage() {
           Author session logs and DM-only notes for a campaign.
         </p>
       </div>
+
+      {error && <p className="text-sm text-destructive">{error}</p>}
 
       <Select
         value={selectedCampaign}
@@ -123,7 +173,7 @@ export default function AdminSessionsPage() {
             onClick={() => {
               setShowNew(true);
               setEditId(null);
-              setForm(EMPTY_FORM);
+              setForm({ slug: '', title: '', contentMd: '', isDmOnly: false });
             }}
           >
             New Note

@@ -2,10 +2,10 @@ import { NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { campaigns } from '@/lib/db/schema';
 import { requireAdmin, requireAuth } from '@/lib/auth';
-import { badRequest, withGuard } from '@/lib/api/responses';
+import { BadRequestError, errorResponse, parseJsonBody, requireNumber, requireString } from '@/lib/api-errors';
 import { isAllowedRepoUrl } from '@/lib/content/repo-url';
-import { eq } from 'drizzle-orm';
 import { coerceTheme } from '@/lib/themes';
+import { eq } from 'drizzle-orm';
 
 export async function GET() {
   try {
@@ -26,46 +26,42 @@ export async function GET() {
       .where(eq(campaigns.isHidden, false))
       .all();
     return NextResponse.json(visible);
-  } catch {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  } catch (err) {
+    return errorResponse('GET /api/campaigns', err);
   }
 }
 
 export async function POST(request: Request) {
   try {
     await requireAdmin();
-  } catch {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    const body = await parseJsonBody(request);
+    const name = requireString(body, 'name').trim();
+    const loreRepoUrl = requireString(body, 'loreRepoUrl').trim();
+    if (!isAllowedRepoUrl(loreRepoUrl)) {
+      throw new BadRequestError('name and a valid http(s)/ssh loreRepoUrl are required');
+    }
+    db.insert(campaigns)
+      .values({
+        name,
+        description: typeof body.description === 'string' ? body.description : '',
+        loreRepoUrl,
+        theme: coerceTheme(body.theme),
+        isHidden: !!body.isHidden,
+        starMapConfig:
+          typeof body.starMapConfig === 'string' ? body.starMapConfig : '{}',
+      })
+      .run();
+    return NextResponse.json({ message: 'Campaign created' }, { status: 201 });
+  } catch (err) {
+    return errorResponse('POST /api/campaigns', err);
   }
-  let body: Record<string, unknown>;
-  try {
-    body = await request.json();
-  } catch {
-    return badRequest('Invalid JSON');
-  }
-  const name = typeof body.name === 'string' ? body.name.trim() : '';
-  const loreRepoUrl =
-    typeof body.loreRepoUrl === 'string' ? body.loreRepoUrl.trim() : '';
-  if (!name || !isAllowedRepoUrl(loreRepoUrl)) {
-    return badRequest('name and a valid http(s)/ssh loreRepoUrl are required');
-  }
-  db.insert(campaigns)
-    .values({
-      name,
-      description: typeof body.description === 'string' ? body.description : '',
-      loreRepoUrl,
-      theme: coerceTheme(body.theme),
-      isHidden: !!body.isHidden,
-      starMapConfig:
-        typeof body.starMapConfig === 'string' ? body.starMapConfig : '{}',
-    })
-    .run();
-  return NextResponse.json({ message: 'Campaign created' }, { status: 201 });
 }
 
 export async function PUT(request: Request) {
-  return withGuard(requireAdmin, async () => {
-    const body = await request.json();
+  try {
+    await requireAdmin();
+    const body = await parseJsonBody(request);
+    const id = requireNumber(body, 'id');
     if (
       (body.name !== undefined &&
         (typeof body.name !== 'string' || !body.name.trim())) ||
@@ -76,28 +72,36 @@ export async function PUT(request: Request) {
         typeof body.starMapConfig !== 'string') ||
       (body.isHidden !== undefined && typeof body.isHidden !== 'boolean')
     ) {
-      return badRequest('Invalid campaign fields');
+      throw new BadRequestError('Invalid campaign fields');
     }
     const theme = body.theme == null ? undefined : coerceTheme(body.theme);
     db.update(campaigns)
       .set({
-        name: body.name,
+        name: body.name === undefined ? undefined : body.name.trim(),
         description: body.description,
-        loreRepoUrl: body.loreRepoUrl,
+        loreRepoUrl:
+          body.loreRepoUrl === undefined ? undefined : body.loreRepoUrl.trim(),
         theme,
         isHidden: body.isHidden,
         starMapConfig: body.starMapConfig,
       })
-      .where(eq(campaigns.id, body.id))
+      .where(eq(campaigns.id, id))
       .run();
     return NextResponse.json({ message: 'Campaign updated' });
-  });
+  } catch (err) {
+    return errorResponse('PUT /api/campaigns', err);
+  }
 }
 
 export async function DELETE(request: Request) {
-  return withGuard(requireAdmin, async () => {
-    const { id } = await request.json();
-    db.delete(campaigns).where(eq(campaigns.id, id)).run();
+  try {
+    await requireAdmin();
+    const body = await parseJsonBody(request);
+    db.delete(campaigns)
+      .where(eq(campaigns.id, requireNumber(body, 'id')))
+      .run();
     return NextResponse.json({ message: 'Campaign deleted' });
-  });
+  } catch (err) {
+    return errorResponse('DELETE /api/campaigns', err);
+  }
 }

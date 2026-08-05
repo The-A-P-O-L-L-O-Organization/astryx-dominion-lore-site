@@ -2,9 +2,10 @@ import { NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { users } from '@/lib/db/schema';
 import { hashPassword } from '@/lib/auth';
-import { badRequest, jsonError, serverError } from '@/lib/api/responses';
+import { badRequest, jsonError } from '@/lib/api/responses';
 import { getClientIp, isRateLimited } from '@/lib/rate-limit';
 import { eq } from 'drizzle-orm';
+import { errorResponse, parseJsonBody } from '@/lib/api-errors';
 
 const REGISTER_LIMIT = 1;
 const REGISTER_WINDOW_MS = 60 * 1000;
@@ -16,13 +17,12 @@ export async function POST(request: Request) {
       return jsonError('Too many registrations. Try again later.', 429);
     }
 
-    const { username, password } = await request.json();
-    if (
-      typeof username !== 'string' ||
-      typeof password !== 'string' ||
-      !username ||
-      password.length < 6
-    ) {
+    const body = await parseJsonBody(request);
+    const { username, password } = body as {
+      username?: string;
+      password?: string;
+    };
+    if (!username || !password || password.length < 6) {
       return badRequest('Username and password (min 6 chars) required');
     }
 
@@ -45,7 +45,7 @@ export async function POST(request: Request) {
       { message: 'Account created', role },
       { status: 201 },
     );
-  } catch {
-    return serverError();
+  } catch (err) {
+    return errorResponse('POST /api/auth/register', err);
   }
 }

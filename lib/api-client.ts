@@ -1,22 +1,61 @@
-export interface JsonResult<T> {
-  ok: boolean;
-  data: T;
+export class ApiError extends Error {
+  readonly status: number;
+
+  constructor(message: string, status: number) {
+    super(message);
+    this.name = 'ApiError';
+    this.status = status;
+  }
 }
 
-export async function fetchJson<T>(url: string): Promise<T> {
-  const res = await fetch(url);
-  return res.json();
+async function readErrorMessage(res: Response, fallback: string) {
+  try {
+    const body = await res.json();
+    if (body && typeof body.error === 'string') return body.error;
+  } catch {
+    return fallback;
+  }
+  return fallback;
 }
 
-export async function requestJson<T = unknown>(
-  url: string,
-  method: 'POST' | 'PUT' | 'DELETE',
-  body: unknown,
-): Promise<JsonResult<T>> {
-  const res = await fetch(url, {
-    method,
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(body),
-  });
-  return { ok: res.ok, data: await res.json() };
+export async function apiFetch(
+  input: string,
+  init?: RequestInit,
+): Promise<Response> {
+  let res: Response;
+  try {
+    res = await fetch(input, init);
+  } catch (err) {
+    throw new ApiError(
+      err instanceof Error && err.message
+        ? `Network error: ${err.message}`
+        : 'Network error — please try again',
+      0,
+    );
+  }
+  if (!res.ok) {
+    throw new ApiError(
+      await readErrorMessage(res, `Request failed (${res.status})`),
+      res.status,
+    );
+  }
+  return res;
+}
+
+export async function apiJson<T>(
+  input: string,
+  init?: RequestInit,
+): Promise<T> {
+  const res = await apiFetch(input, init);
+  try {
+    return (await res.json()) as T;
+  } catch {
+    throw new ApiError('Received a malformed response from the server', 500);
+  }
+}
+
+export function errorMessage(err: unknown, fallback: string): string {
+  if (err instanceof ApiError) return err.message;
+  if (err instanceof Error && err.message) return err.message;
+  return fallback;
 }

@@ -3,7 +3,6 @@
 import { useState, FormEvent } from 'react';
 import { useRouter } from 'next/navigation';
 import { Orbit } from 'lucide-react';
-import { requestJson } from '@/lib/api-client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -15,6 +14,7 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 import Link from 'next/link';
+import { apiFetch, errorMessage } from '@/lib/api-client';
 
 export default function RegisterPage() {
   const [username, setUsername] = useState('');
@@ -30,16 +30,15 @@ export default function RegisterPage() {
     setSuccess('');
     if (password !== confirm) return setError('Passwords do not match');
     try {
-      const { ok, data } = await requestJson<{ error?: string }>(
-        '/api/auth/register',
-        'POST',
-        { username, password },
-      );
-      if (!ok) return setError(data.error || 'Registration failed');
+      await apiFetch('/api/auth/register', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username, password }),
+      });
       setSuccess('Account created! Redirecting to login...');
       setTimeout(() => router.push('/login'), 1500);
-    } catch {
-      return setError('Network error — please try again');
+    } catch (err) {
+      return setError(errorMessage(err, 'Registration failed'));
     }
   }
 
