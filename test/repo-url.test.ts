@@ -15,9 +15,7 @@ describe('isAllowedRepoUrl', () => {
   });
 
   it('rejects ssh option injection through host or userinfo', () => {
-    expect(
-      isAllowedRepoUrl('ssh://-oProxyCommand=touch%20/tmp/x'),
-    ).toBe(false);
+    expect(isAllowedRepoUrl('ssh://-oProxyCommand=touch%20/tmp/x')).toBe(false);
     expect(
       isAllowedRepoUrl('ssh://-oProxyCommand=sh%20-c%20id@host/repo'),
     ).toBe(false);

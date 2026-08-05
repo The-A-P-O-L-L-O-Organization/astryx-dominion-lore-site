@@ -160,7 +160,7 @@ describe('POST /api/campaigns', () => {
     const req = new Request('http://localhost/api/campaigns', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ name: 'NoTheme', loreRepoUrl: 'git:...' }),
+      body: JSON.stringify({ name: 'NoTheme', loreRepoUrl: REPO_URL }),
     });
     await POST(req);
     expect(calls).toHaveLength(1);
@@ -174,7 +174,7 @@ describe('POST /api/campaigns', () => {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         name: 'NullTheme',
-        loreRepoUrl: 'git:...',
+        loreRepoUrl: REPO_URL,
         theme: null,
       }),
     });
@@ -248,7 +248,7 @@ describe('POST /api/campaigns theme validation', () => {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           name: `Campaign ${theme}`,
-          loreRepoUrl: 'x',
+          loreRepoUrl: REPO_URL,
           theme,
         }),
       });
@@ -262,7 +262,11 @@ describe('POST /api/campaigns theme validation', () => {
     const req = new Request('http://localhost/api/campaigns', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ name: 'Bad', loreRepoUrl: 'x', theme: 'ocean' }),
+      body: JSON.stringify({
+        name: 'Bad',
+        loreRepoUrl: REPO_URL,
+        theme: 'ocean',
+      }),
     });
     await POST(req);
     const c = db.select().from(schema.campaigns).get()!;
@@ -273,7 +277,11 @@ describe('POST /api/campaigns theme validation', () => {
     const req = new Request('http://localhost/api/campaigns', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ name: 'Old', loreRepoUrl: 'x', theme: 'sci-fi' }),
+      body: JSON.stringify({
+        name: 'Old',
+        loreRepoUrl: REPO_URL,
+        theme: 'sci-fi',
+      }),
     });
     await POST(req);
     const c = db.select().from(schema.campaigns).get()!;
@@ -281,14 +289,16 @@ describe('POST /api/campaigns theme validation', () => {
   });
 
   it('coerces an unknown theme to techno on update', async () => {
-    db.insert(schema.campaigns).values({ name: 'Old', loreRepoUrl: 'x' }).run();
+    db.insert(schema.campaigns)
+      .values({ name: 'Old', loreRepoUrl: REPO_URL })
+      .run();
     const req = new Request('http://localhost/api/campaigns', {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         id: 1,
         name: 'Updated',
-        loreRepoUrl: 'x',
+        loreRepoUrl: REPO_URL,
         description: '',
         theme: 'ocean',
         isHidden: false,
@@ -302,7 +312,7 @@ describe('POST /api/campaigns theme validation', () => {
 
   it('does not change theme when theme is omitted on update', async () => {
     db.insert(schema.campaigns)
-      .values({ name: 'Forest', loreRepoUrl: 'x', theme: 'forest' })
+      .values({ name: 'Forest', loreRepoUrl: REPO_URL, theme: 'forest' })
       .run();
     const req = new Request('http://localhost/api/campaigns', {
       method: 'PUT',
@@ -310,7 +320,7 @@ describe('POST /api/campaigns theme validation', () => {
       body: JSON.stringify({
         id: 1,
         name: 'Forest',
-        loreRepoUrl: 'x',
+        loreRepoUrl: REPO_URL,
         description: '',
         isHidden: false,
         starMapConfig: '{}',
@@ -323,7 +333,7 @@ describe('POST /api/campaigns theme validation', () => {
 
   it('does not change theme when theme is null on update', async () => {
     db.insert(schema.campaigns)
-      .values({ name: 'Forest', loreRepoUrl: 'x', theme: 'forest' })
+      .values({ name: 'Forest', loreRepoUrl: REPO_URL, theme: 'forest' })
       .run();
     const req = new Request('http://localhost/api/campaigns', {
       method: 'PUT',
@@ -331,7 +341,7 @@ describe('POST /api/campaigns theme validation', () => {
       body: JSON.stringify({
         id: 1,
         name: 'Forest',
-        loreRepoUrl: 'x',
+        loreRepoUrl: REPO_URL,
         description: '',
         theme: null,
         isHidden: false,

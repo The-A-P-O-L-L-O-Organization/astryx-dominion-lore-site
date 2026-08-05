@@ -28,7 +28,16 @@ interface Campaign {
   starMapConfig: string;
 }
 
-const EMPTY_FORM = {
+interface CampaignForm {
+  name: string;
+  description: string;
+  loreRepoUrl: string;
+  theme: string;
+  isHidden: boolean;
+  starMapConfig: string;
+}
+
+const EMPTY_FORM: CampaignForm = {
   name: '',
   description: '',
   loreRepoUrl: '',
