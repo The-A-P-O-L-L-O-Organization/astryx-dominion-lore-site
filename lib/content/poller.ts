@@ -12,6 +12,7 @@ import {
 import { eq, and } from 'drizzle-orm';
 import { byCampaignPage } from '@/lib/db/filters';
 import { parseMarkdownFile, parseSessionNoteFile } from './parser';
+import { isAllowedRepoUrl } from './repo-url';
 import simpleGit from 'simple-git';
 
 const CONTENT_DIR = process.env.CONTENT_DIR || '/data/repos';
@@ -19,9 +20,12 @@ const CONTENT_DIR = process.env.CONTENT_DIR || '/data/repos';
 export async function pollCampaign(
   campaign: typeof campaigns.$inferSelect,
 ): Promise<void> {
-  const repoDir = `${CONTENT_DIR}/${campaign.id}`;
+  const repoDir = path.join(CONTENT_DIR, String(campaign.id));
 
   if (!existsSync(repoDir)) {
+    if (!isAllowedRepoUrl(campaign.loreRepoUrl)) {
+      throw new Error(`Refusing to clone unsupported repo URL`);
+    }
     await simpleGit().clone(campaign.loreRepoUrl, repoDir, ['--depth', '1']);
   } else {
     const git = simpleGit(repoDir);

@@ -26,6 +26,7 @@ vi.mock('@/lib/auth', () => ({
 
 import * as schema from '@/lib/db/schema';
 import { db } from '@/lib/db';
+import { requireAuth } from '@/lib/auth';
 
 describe('GET /api/characters', () => {
   beforeEach(() => {
@@ -41,7 +42,7 @@ describe('GET /api/characters', () => {
     expect(body).toEqual([]);
   });
 
-  it('returns all characters', async () => {
+  it('returns only the caller\u2019s characters', async () => {
     db.insert(schema.users)
       .values({ username: 'u', passwordHash: 'hash' })
       .run();
@@ -49,10 +50,31 @@ describe('GET /api/characters', () => {
     db.insert(schema.characters)
       .values({ userId: 1, campaignId: 1, name: 'Hero' })
       .run();
+    db.insert(schema.characters)
+      .values({ userId: 2, campaignId: 1, name: 'Someone Else' })
+      .run();
     const res = await GET();
     const body = await res.json();
     expect(body).toHaveLength(1);
     expect(body[0].name).toBe('Hero');
+  });
+
+  it('returns every character for an admin', async () => {
+    vi.mocked(requireAuth).mockResolvedValueOnce({
+      user: { ...mockUser, role: 'admin' },
+    } as Awaited<ReturnType<typeof requireAuth>>);
+    db.insert(schema.characters)
+      .values({ userId: 2, campaignId: 1, name: 'Someone Else' })
+      .run();
+    const res = await GET();
+    const body = await res.json();
+    expect(body).toHaveLength(1);
+  });
+
+  it('rejects unauthenticated callers', async () => {
+    vi.mocked(requireAuth).mockRejectedValueOnce(new Error('Unauthorized'));
+    const res = await GET();
+    expect(res.status).toBe(401);
   });
 });
 

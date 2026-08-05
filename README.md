@@ -53,11 +53,13 @@ The app serves on port 3000. Data persists in the `lore-data` Docker volume. Cro
 
 Environment variables:
 
-| Variable         | Default         | Description                        |
-| ---------------- | --------------- | ---------------------------------- |
-| `DATABASE_PATH`  | `./data/app.db` | Path to SQLite database file       |
-| `CONTENT_DIR`    | `./data/repos`  | Directory for cloned git repos     |
-| `SESSION_SECRET` | (required)      | Secret for signing session cookies |
+| Variable         | Default         | Description                                                           |
+| ---------------- | --------------- | --------------------------------------------------------------------- |
+| `DATABASE_PATH`  | `./data/app.db` | Path to SQLite database file                                          |
+| `CONTENT_DIR`    | `./data/repos`  | Directory for cloned git repos                                        |
+| `SESSION_SECRET` | (required)      | Secret for signing session cookies                                    |
+| `POLL_SECRET`    | (unset)         | When set, `GET /api/poll-content` requires the `x-poll-secret` header |
+| `SECURE_COOKIES` | `false`         | Set to `true` behind HTTPS to mark the session cookie `Secure`        |
 
 ## Configuration
 

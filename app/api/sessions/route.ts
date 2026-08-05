@@ -54,7 +54,20 @@ export async function POST(request: Request) {
     const campaignIdNum = parseNumericId(body.campaignId);
     if (campaignIdNum === null) return badRequest('Invalid campaign ID');
 
-    const slug = sanitizeSlug(body.slug);
+    const slug = sanitizeSlug(String(body.slug ?? ''));
+    if (!slug) {
+      return NextResponse.json({ error: 'Invalid slug' }, { status: 400 });
+    }
+    if (
+      typeof body.title !== 'string' ||
+      typeof body.contentMd !== 'string' ||
+      !body.title
+    ) {
+      return NextResponse.json(
+        { error: 'title and contentMd required' },
+        { status: 400 },
+      );
+    }
     db.insert(sessionNotes)
       .values({
         campaignId: campaignIdNum,

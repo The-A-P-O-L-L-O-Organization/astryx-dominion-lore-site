@@ -6,27 +6,51 @@ import { notFound, withGuard } from '@/lib/api/responses';
 import { eq } from 'drizzle-orm';
 
 export async function GET() {
-  const all = db.select().from(characters).all();
-  return NextResponse.json(all);
+  try {
+    const { user } = await requireAuth();
+    const all =
+      user.role === 'admin'
+        ? db.select().from(characters).all()
+        : db
+            .select()
+            .from(characters)
+            .where(eq(characters.userId, user.id))
+            .all();
+    return NextResponse.json(all);
+  } catch {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
 }
 
 export async function POST(request: Request) {
   return withGuard(requireAuth, async ({ user }) => {
     const body = await request.json();
 
+    const campaignId = Number(body.campaignId);
+    const name = typeof body.name === 'string' ? body.name.trim() : '';
+    if (!Number.isInteger(campaignId) || !name) {
+      return NextResponse.json(
+        { error: 'campaignId and name required' },
+        { status: 400 },
+      );
+    }
+
     const campaign = db
       .select()
       .from(campaigns)
-      .where(eq(campaigns.id, body.campaignId))
+      .where(eq(campaigns.id, campaignId))
       .get();
     if (!campaign) return notFound('Campaign not found');
+    if (campaign.isHidden && user.role !== 'admin') {
+      return notFound('Campaign not found');
+    }
 
     db.insert(characters)
       .values({
         userId: user.id,
-        campaignId: body.campaignId,
-        name: body.name,
-        info: body.info || '',
+        campaignId,
+        name,
+        info: typeof body.info === 'string' ? body.info : '',
       })
       .run();
     return NextResponse.json(

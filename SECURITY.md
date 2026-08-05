@@ -54,8 +54,8 @@ The following are out of scope:
 
 This application is designed for **LAN-only deployment behind a reverse proxy**. If you expose it to the internet:
 
-- Place it behind HTTPS with a valid certificate
+- Place it behind HTTPS with a valid certificate, and set `SECURE_COOKIES=true` so the session cookie carries the `Secure` flag
 - Configure a Web Application Firewall
 - Set strong `SESSION_SECRET` and admin credentials
-- Consider adding rate limiting to all auth endpoints (only register is rate-limited by default)
+- Login (10 attempts / 5 minutes per IP) and register (1 / minute per IP) are rate-limited in-process by client IP; put a proxy-level limiter in front if the app is internet-facing
 - Review the cron poller endpoint `GET /api/poll-content`. It is unauthenticated by default (LAN-only design). If the `POLL_SECRET` environment variable is set, the endpoint instead requires the `x-poll-secret` header to match it (or an authenticated admin session) — set it when exposing the app beyond a trusted network.

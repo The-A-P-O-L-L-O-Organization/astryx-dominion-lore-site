@@ -172,9 +172,18 @@ type: planet
   });
 
   it('renders inline HTML when present', () => {
-    const md = '<div class="custom">Hello</div>';
+    const md = '<div><em>Hello</em></div>';
     const result = parseMarkdownFile('content/page.md', md);
-    expect(result.htmlRendered).toContain('<div class="custom">');
+    expect(result.htmlRendered).toContain('<div><em>Hello</em></div>');
+  });
+
+  it('strips script tags and event handlers from inline HTML', () => {
+    const md =
+      '<script>alert(1)</script>\n\n<img src="x" onerror="alert(1)">\n\n[link](javascript:alert(1))';
+    const result = parseMarkdownFile('content/page.md', md);
+    expect(result.htmlRendered).not.toContain('<script');
+    expect(result.htmlRendered).not.toContain('onerror');
+    expect(result.htmlRendered).not.toContain('javascript:');
   });
 
   it('handles empty content', () => {
