@@ -2,7 +2,13 @@ import { NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { campaigns } from '@/lib/db/schema';
 import { requireAdmin, requireAuth } from '@/lib/auth';
-import { BadRequestError, errorResponse, parseJsonBody, requireNumber, requireString } from '@/lib/api-errors';
+import {
+  BadRequestError,
+  errorResponse,
+  parseJsonBody,
+  requireNumber,
+  requireString,
+} from '@/lib/api-errors';
 import { isAllowedRepoUrl } from '@/lib/content/repo-url';
 import { coerceTheme } from '@/lib/themes';
 import { eq } from 'drizzle-orm';
@@ -38,12 +44,15 @@ export async function POST(request: Request) {
     const name = requireString(body, 'name').trim();
     const loreRepoUrl = requireString(body, 'loreRepoUrl').trim();
     if (!isAllowedRepoUrl(loreRepoUrl)) {
-      throw new BadRequestError('name and a valid http(s)/ssh loreRepoUrl are required');
+      throw new BadRequestError(
+        'name and a valid http(s)/ssh loreRepoUrl are required',
+      );
     }
     db.insert(campaigns)
       .values({
         name,
-        description: typeof body.description === 'string' ? body.description : '',
+        description:
+          typeof body.description === 'string' ? body.description : '',
         loreRepoUrl,
         theme: coerceTheme(body.theme),
         isHidden: !!body.isHidden,
@@ -77,13 +86,23 @@ export async function PUT(request: Request) {
     const theme = body.theme == null ? undefined : coerceTheme(body.theme);
     db.update(campaigns)
       .set({
-        name: body.name === undefined ? undefined : body.name.trim(),
-        description: body.description,
+        name:
+          typeof body.name === 'string' && body.name.trim()
+            ? body.name.trim()
+            : undefined,
+        description:
+          typeof body.description === 'string' ? body.description : undefined,
         loreRepoUrl:
-          body.loreRepoUrl === undefined ? undefined : body.loreRepoUrl.trim(),
+          typeof body.loreRepoUrl === 'string' && body.loreRepoUrl.trim()
+            ? body.loreRepoUrl.trim()
+            : undefined,
         theme,
-        isHidden: body.isHidden,
-        starMapConfig: body.starMapConfig,
+        isHidden:
+          typeof body.isHidden === 'boolean' ? body.isHidden : undefined,
+        starMapConfig:
+          typeof body.starMapConfig === 'string'
+            ? body.starMapConfig
+            : undefined,
       })
       .where(eq(campaigns.id, id))
       .run();

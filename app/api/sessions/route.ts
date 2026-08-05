@@ -27,7 +27,8 @@ export async function GET(request: Request) {
 
     if (characterId) {
       const characterIdNum = Number(characterId);
-      if (isNaN(characterIdNum)) throw new BadRequestError('Invalid character ID');
+      if (isNaN(characterIdNum))
+        throw new BadRequestError('Invalid character ID');
       const character = db
         .select()
         .from(characters)
@@ -43,7 +44,8 @@ export async function GET(request: Request) {
 
     if (campaignId && user.role === 'admin') {
       const campaignIdNum = Number(campaignId);
-      if (isNaN(campaignIdNum)) throw new BadRequestError('Invalid campaign ID');
+      if (isNaN(campaignIdNum))
+        throw new BadRequestError('Invalid campaign ID');
       return NextResponse.json(listSessionNotes(campaignIdNum, true));
     }
 
@@ -103,9 +105,10 @@ export async function PUT(request: Request) {
     const title =
       body.title === undefined ? undefined : requireString(body, 'title');
     const contentMd =
-      body.contentMd === undefined ? undefined : optionalString(body, 'contentMd');
-    const isDmOnly =
-      body.isDmOnly === undefined ? undefined : !!body.isDmOnly;
+      body.contentMd === undefined
+        ? undefined
+        : optionalString(body, 'contentMd');
+    const isDmOnly = body.isDmOnly === undefined ? undefined : !!body.isDmOnly;
 
     db.update(sessionNotes)
       .set({
