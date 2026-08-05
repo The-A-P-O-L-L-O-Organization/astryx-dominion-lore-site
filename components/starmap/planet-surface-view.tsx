@@ -2,43 +2,18 @@
 
 import { Canvas } from '@react-three/fiber';
 import { OrbitControls, Sphere } from '@react-three/drei';
-import * as THREE from 'three';
-
-interface Marker {
-  id: string;
-  name: string;
-  lat: number;
-  lon: number;
-  description: string;
-  type: string;
-}
+import { terrainColor } from '@/lib/starmap/terrain';
+import type { SurfaceMarker } from '@/lib/starmap/types';
 
 interface PlanetSurfaceViewProps {
   planetName: string;
   color: string;
   terrainType: string;
-  markers: Marker[];
+  markers: SurfaceMarker[];
   onBack: () => void;
 }
 
-function terrainColor(terrainType: string): string {
-  switch (terrainType) {
-    case 'rocky':
-      return '#8B7355';
-    case 'gas_giant':
-      return '#D4A574';
-    case 'ice':
-      return '#B0D4F1';
-    case 'ocean':
-      return '#2E86AB';
-    case 'lava':
-      return '#E85D04';
-    default:
-      return '#8B7355';
-  }
-}
-
-function MarkerPins({ markers }: { markers: Marker[] }) {
+function MarkerPins({ markers }: { markers: SurfaceMarker[] }) {
   return (
     <group>
       {markers.map((marker) => {

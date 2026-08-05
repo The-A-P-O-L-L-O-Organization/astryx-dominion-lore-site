@@ -1,20 +1,10 @@
-import { notFound, redirect } from 'next/navigation';
-import { getSession } from '@/lib/auth';
+import { notFound } from 'next/navigation';
 import { db } from '@/lib/db';
-import { characters, campaigns, sessionNotes } from '@/lib/db/schema';
+import { sessionNotes } from '@/lib/db/schema';
 import { eq, and } from 'drizzle-orm';
 import { Badge } from '@/components/ui/badge';
-import { remark } from 'remark';
-import remarkGfm from 'remark-gfm';
-import remarkRehype from 'remark-rehype';
-import rehypeRaw from 'rehype-raw';
-import rehypeStringify from 'rehype-stringify';
-
-const processor = remark()
-  .use(remarkGfm)
-  .use(remarkRehype, { allowDangerousHtml: true })
-  .use(rehypeRaw)
-  .use(rehypeStringify);
+import { requireCharacterAccess } from '@/lib/character-access';
+import { renderMarkdown } from '@/lib/content/markdown';
 
 export default async function SessionNotePage({
   params,
@@ -22,19 +12,7 @@ export default async function SessionNotePage({
   params: Promise<{ characterId: string; slug: string }>;
 }) {
   const { characterId, slug } = await params;
-  const characterIdNum = Number(characterId);
-  if (isNaN(characterIdNum)) notFound();
-
-  const session = await getSession();
-  if (!session) redirect('/login');
-
-  const character = db
-    .select()
-    .from(characters)
-    .where(eq(characters.id, characterIdNum))
-    .get();
-  if (!character || character.userId !== session.user.id) notFound();
-  if (!character.isApproved) notFound();
+  const { user, character } = await requireCharacterAccess(characterId);
 
   const note = db
     .select()
@@ -48,9 +26,9 @@ export default async function SessionNotePage({
     .get();
 
   if (!note) notFound();
-  if (note.isDmOnly && session.user.role !== 'admin') notFound();
+  if (note.isDmOnly && user.role !== 'admin') notFound();
 
-  const html = String(processor.processSync(note.contentMd));
+  const html = renderMarkdown(note.contentMd);
 
   return (
     <div className="mx-auto max-w-3xl space-y-6">

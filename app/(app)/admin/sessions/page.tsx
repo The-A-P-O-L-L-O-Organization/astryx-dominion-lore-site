@@ -1,7 +1,8 @@
 'use client';
 
-import { useEffect, useState, FormEvent } from 'react';
-import { useRouter } from 'next/navigation';
+import { useCallback, useState, FormEvent } from 'react';
+import { fetchJson, requestJson } from '@/lib/api-client';
+import { useAsyncData } from '@/hooks/use-async-data';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -31,70 +32,50 @@ interface Campaign {
   name: string;
 }
 
+const EMPTY_FORM = { slug: '', title: '', contentMd: '', isDmOnly: false };
+
 export default function AdminSessionsPage() {
-  const [notes, setNotes] = useState<SessionNote[]>([]);
-  const [campaigns, setCampaigns] = useState<Campaign[]>([]);
   const [selectedCampaign, setSelectedCampaign] = useState('');
   const [showNew, setShowNew] = useState(false);
   const [editId, setEditId] = useState<number | null>(null);
-  const [form, setForm] = useState({
-    slug: '',
-    title: '',
-    contentMd: '',
-    isDmOnly: false,
-  });
-  const router = useRouter();
+  const [form, setForm] = useState(EMPTY_FORM);
 
-  useEffect(() => {
-    fetch('/api/campaigns')
-      .then((r) => r.json())
-      .then(setCampaigns);
-  }, []);
+  const fetchCampaigns = useCallback(
+    () => fetchJson<Campaign[]>('/api/campaigns'),
+    [],
+  );
+  const { data: campaigns } = useAsyncData<Campaign[]>(fetchCampaigns, []);
 
-  async function fetchNotes(campaignId: string) {
-    if (!campaignId) return [];
-    const res = await fetch(`/api/sessions?campaignId=${campaignId}`);
-    return res.json();
-  }
-
-  async function loadNotes(campaignId: string) {
-    setNotes(await fetchNotes(campaignId));
-  }
-
-  useEffect(() => {
-    let ignore = false;
-    fetchNotes(selectedCampaign).then((data) => {
-      if (!ignore) setNotes(data);
-    });
-    return () => {
-      ignore = true;
-    };
-  }, [selectedCampaign]);
+  const fetchNotes = useCallback(
+    () =>
+      selectedCampaign
+        ? fetchJson<SessionNote[]>(
+            `/api/sessions?campaignId=${selectedCampaign}`,
+          )
+        : Promise.resolve([]),
+    [selectedCampaign],
+  );
+  const { data: notes, reload: reloadNotes } = useAsyncData<SessionNote[]>(
+    fetchNotes,
+    [],
+  );
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
     const body = editId
       ? { id: editId, ...form, campaignId: Number(selectedCampaign) }
       : { ...form, campaignId: Number(selectedCampaign) };
-    await fetch('/api/sessions', {
-      method: editId ? 'PUT' : 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(body),
-    });
+    await requestJson('/api/sessions', editId ? 'PUT' : 'POST', body);
     setShowNew(false);
     setEditId(null);
-    setForm({ slug: '', title: '', contentMd: '', isDmOnly: false });
-    loadNotes(selectedCampaign);
+    setForm(EMPTY_FORM);
+    reloadNotes();
   }
 
   async function handleDelete(id: number) {
     if (!confirm('Delete this note?')) return;
-    await fetch('/api/sessions', {
-      method: 'DELETE',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ id }),
-    });
-    loadNotes(selectedCampaign);
+    await requestJson('/api/sessions', 'DELETE', { id });
+    reloadNotes();
   }
 
   function startEdit(n: SessionNote) {
@@ -142,7 +123,7 @@ export default function AdminSessionsPage() {
             onClick={() => {
               setShowNew(true);
               setEditId(null);
-              setForm({ slug: '', title: '', contentMd: '', isDmOnly: false });
+              setForm(EMPTY_FORM);
             }}
           >
             New Note

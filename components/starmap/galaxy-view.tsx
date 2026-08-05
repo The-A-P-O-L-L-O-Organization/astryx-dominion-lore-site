@@ -4,15 +4,7 @@ import { useRef, useMemo } from 'react';
 import { Canvas } from '@react-three/fiber';
 import { OrbitControls, Text, Line } from '@react-three/drei';
 import * as THREE from 'three';
-
-interface StarSystem {
-  id: string;
-  name: string;
-  x: number;
-  y: number;
-  z: number;
-  star: { color: string; size: number; star_type: string };
-}
+import type { StarSystem } from '@/lib/starmap/types';
 
 interface GalaxyViewProps {
   systems: StarSystem[];

@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { users } from '@/lib/db/schema';
 import { hashPassword } from '@/lib/auth';
+import { badRequest, jsonError, serverError } from '@/lib/api/responses';
 import { eq } from 'drizzle-orm';
 
 const rateLimitMap = new Map<string, number>();
@@ -18,18 +19,12 @@ export async function POST(request: Request) {
   try {
     const ip = request.headers.get('x-forwarded-for') || 'unknown';
     if (isRateLimited(ip)) {
-      return NextResponse.json(
-        { error: 'Too many registrations. Try again later.' },
-        { status: 429 },
-      );
+      return jsonError('Too many registrations. Try again later.', 429);
     }
 
     const { username, password } = await request.json();
     if (!username || !password || password.length < 6) {
-      return NextResponse.json(
-        { error: 'Username and password (min 6 chars) required' },
-        { status: 400 },
-      );
+      return badRequest('Username and password (min 6 chars) required');
     }
 
     const existing = db
@@ -38,10 +33,7 @@ export async function POST(request: Request) {
       .where(eq(users.username, username))
       .get();
     if (existing) {
-      return NextResponse.json(
-        { error: 'Username already taken' },
-        { status: 409 },
-      );
+      return jsonError('Username already taken', 409);
     }
 
     const passwordHash = await hashPassword(password);
@@ -55,9 +47,6 @@ export async function POST(request: Request) {
       { status: 201 },
     );
   } catch {
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 },
-    );
+    return serverError();
   }
 }

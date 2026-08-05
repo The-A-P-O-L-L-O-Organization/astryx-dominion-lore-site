@@ -1,7 +1,9 @@
 'use client';
 
-import { useEffect, useState, use, useCallback } from 'react';
+import { useState, use, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
+import { fetchJson, requestJson } from '@/lib/api-client';
+import { useAsyncData } from '@/hooks/use-async-data';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -15,7 +17,23 @@ interface PageRow {
 
 interface SectionRow {
   sectionId: string;
+  pagePath: string;
   isHidden: boolean | number;
+}
+
+interface CampaignRow {
+  id: number;
+  name: string;
+}
+
+interface VisibilityResponse {
+  pages: PageRow[];
+  sections: SectionRow[];
+}
+
+interface VisibilityView {
+  name: string;
+  pages: PageRow[];
 }
 
 export default function AdminVisibilityPage({
@@ -24,18 +42,16 @@ export default function AdminVisibilityPage({
   params: Promise<{ campaignId: string }>;
 }) {
   const { campaignId } = use(params);
-  const [campaignName, setCampaignName] = useState('');
-  const [pages, setPages] = useState<PageRow[]>([]);
   const [expandedPages, setExpandedPages] = useState<Set<string>>(new Set());
   const router = useRouter();
 
-  const fetchData = useCallback(async () => {
-    const campRes = await fetch('/api/campaigns');
-    const camps = await campRes.json();
-    const camp = camps.find((c: any) => c.id === Number(campaignId));
+  const fetchData = useCallback(async (): Promise<VisibilityView> => {
+    const camps = await fetchJson<CampaignRow[]>('/api/campaigns');
+    const camp = camps.find((c) => c.id === Number(campaignId));
 
-    const visRes = await fetch(`/api/visibility?campaignId=${campaignId}`);
-    const vis = await visRes.json();
+    const vis = await fetchJson<VisibilityResponse>(
+      `/api/visibility?campaignId=${campaignId}`,
+    );
 
     const pageMap = new Map<string, PageRow>();
     for (const p of vis.pages) {
@@ -48,37 +64,19 @@ export default function AdminVisibilityPage({
     return { name: camp?.name || '', pages: Array.from(pageMap.values()) };
   }, [campaignId]);
 
-  async function load() {
-    const { name, pages } = await fetchData();
-    setCampaignName(name);
-    setPages(pages);
-  }
-
-  useEffect(() => {
-    let ignore = false;
-    fetchData().then(({ name, pages }) => {
-      if (!ignore) {
-        setCampaignName(name);
-        setPages(pages);
-      }
-    });
-    return () => {
-      ignore = true;
-    };
-  }, [fetchData]);
+  const {
+    data: { name: campaignName, pages },
+    reload,
+  } = useAsyncData<VisibilityView>(fetchData, { name: '', pages: [] });
 
   async function togglePage(pagePath: string, currentHidden: boolean | number) {
-    await fetch('/api/visibility', {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        type: 'page',
-        campaignId: Number(campaignId),
-        pagePath,
-        isHidden: !currentHidden,
-      }),
+    await requestJson('/api/visibility', 'PUT', {
+      type: 'page',
+      campaignId: Number(campaignId),
+      pagePath,
+      isHidden: !currentHidden,
     });
-    load();
+    reload();
   }
 
   async function toggleSection(
@@ -86,18 +84,14 @@ export default function AdminVisibilityPage({
     sectionId: string,
     currentHidden: boolean | number,
   ) {
-    await fetch('/api/visibility', {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        type: 'section',
-        campaignId: Number(campaignId),
-        pagePath,
-        sectionId,
-        isHidden: !currentHidden,
-      }),
+    await requestJson('/api/visibility', 'PUT', {
+      type: 'section',
+      campaignId: Number(campaignId),
+      pagePath,
+      sectionId,
+      isHidden: !currentHidden,
     });
-    load();
+    reload();
   }
 
   function toggleExpand(pagePath: string) {

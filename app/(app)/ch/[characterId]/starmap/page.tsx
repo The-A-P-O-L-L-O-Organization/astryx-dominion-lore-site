@@ -1,8 +1,8 @@
-import { notFound, redirect } from 'next/navigation';
-import { getSession } from '@/lib/auth';
 import { db } from '@/lib/db';
-import { characters, campaigns, contentCache } from '@/lib/db/schema';
+import { contentCache } from '@/lib/db/schema';
 import { eq, and, isNotNull } from 'drizzle-orm';
+import { requireCharacterAccess } from '@/lib/character-access';
+import type { CelestialBody, StarMapConfig } from '@/lib/starmap/types';
 import { StarmapClient } from './starmap-client';
 
 export default async function StarmapPage({
@@ -11,30 +11,11 @@ export default async function StarmapPage({
   params: Promise<{ characterId: string }>;
 }) {
   const { characterId } = await params;
-  const characterIdNum = Number(characterId);
-  if (isNaN(characterIdNum)) notFound();
+  const { campaign } = await requireCharacterAccess(characterId);
 
-  const session = await getSession();
-  if (!session) redirect('/login');
+  const starMapConfig = JSON.parse(campaign.starMapConfig) as StarMapConfig;
 
-  const character = db
-    .select()
-    .from(characters)
-    .where(eq(characters.id, characterIdNum))
-    .get();
-  if (!character || character.userId !== session.user.id) notFound();
-  if (!character.isApproved) notFound();
-
-  const campaign = db
-    .select()
-    .from(campaigns)
-    .where(eq(campaigns.id, character.campaignId))
-    .get();
-  if (!campaign) notFound();
-
-  const starMapConfig = JSON.parse(campaign.starMapConfig);
-
-  const bodies = db
+  const bodies: CelestialBody[] = db
     .select({
       pagePath: contentCache.pagePath,
       planetData: contentCache.planetData,

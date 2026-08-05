@@ -1,7 +1,8 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useCallback } from 'react';
+import { fetchJson, requestJson } from '@/lib/api-client';
+import { useAsyncData } from '@/hooks/use-async-data';
 import { Button } from '@/components/ui/button';
 import {
   Card,
@@ -23,35 +24,15 @@ interface Character {
 }
 
 export default function AdminCharactersPage() {
-  const [chars, setChars] = useState<Character[]>([]);
-  const router = useRouter();
-
-  async function fetchChars() {
-    const res = await fetch('/api/characters');
-    return res.json();
-  }
-
-  async function load() {
-    setChars(await fetchChars());
-  }
-
-  useEffect(() => {
-    let ignore = false;
-    fetchChars().then((data) => {
-      if (!ignore) setChars(data);
-    });
-    return () => {
-      ignore = true;
-    };
-  }, []);
+  const fetchChars = useCallback(
+    () => fetchJson<Character[]>('/api/characters'),
+    [],
+  );
+  const { data: chars, reload } = useAsyncData<Character[]>(fetchChars, []);
 
   async function approve(id: number, approved: boolean) {
-    await fetch('/api/characters', {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ id, isApproved: approved }),
-    });
-    load();
+    await requestJson('/api/characters', 'PUT', { id, isApproved: approved });
+    reload();
   }
 
   const pending = chars.filter((c) => !c.isApproved);

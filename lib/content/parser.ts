@@ -1,10 +1,5 @@
 import matter from 'gray-matter';
-import { remark } from 'remark';
-import remarkGfm from 'remark-gfm';
-import remarkRehype from 'remark-rehype';
-import rehypeRaw from 'rehype-raw';
-import rehypeSlug from 'rehype-slug';
-import rehypeStringify from 'rehype-stringify';
+import { renderMarkdown, extractHeadingIds } from './markdown';
 
 export interface ParsedPage {
   pagePath: string;
@@ -15,13 +10,6 @@ export interface ParsedPage {
   sectionIds: string[];
 }
 
-const processor = remark()
-  .use(remarkGfm)
-  .use(remarkRehype, { allowDangerousHtml: true })
-  .use(rehypeRaw)
-  .use(rehypeSlug)
-  .use(rehypeStringify);
-
 export function parseMarkdownFile(
   filePath: string,
   content: string,
@@ -30,14 +18,8 @@ export function parseMarkdownFile(
 
   const pagePath = filePath.replace(/\.md$/, '').replace(/^content\//, '');
 
-  const htmlRendered = String(processor.processSync(mdContent));
-
-  const sectionIds: string[] = [];
-  const headingRegex = /<h([1-6])[^>]*id="([^"]+)"[^>]*>/gi;
-  let match: RegExpExecArray | null;
-  while ((match = headingRegex.exec(htmlRendered)) !== null) {
-    sectionIds.push(match[2]);
-  }
+  const htmlRendered = renderMarkdown(mdContent);
+  const sectionIds = extractHeadingIds(htmlRendered);
 
   let planetData: Record<string, unknown> | null = null;
   const type = frontmatter.type as string | undefined;

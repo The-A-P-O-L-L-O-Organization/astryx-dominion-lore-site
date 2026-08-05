@@ -1,7 +1,9 @@
 'use client';
 
-import { useEffect, useState, FormEvent } from 'react';
+import { useCallback, useState, FormEvent } from 'react';
 import { useRouter } from 'next/navigation';
+import { fetchJson, requestJson } from '@/lib/api-client';
+import { useAsyncData } from '@/hooks/use-async-data';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -14,7 +16,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
-import { THEMES, THEME_LABELS, themeLabel } from '@/lib/themes';
+import { THEMES, THEME_LABELS, themeLabel, DEFAULT_THEME } from '@/lib/themes';
 
 interface Campaign {
   id: number;
@@ -26,69 +28,44 @@ interface Campaign {
   starMapConfig: string;
 }
 
+const EMPTY_FORM = {
+  name: '',
+  description: '',
+  loreRepoUrl: '',
+  theme: DEFAULT_THEME,
+  isHidden: false,
+  starMapConfig: '{}',
+};
+
 export default function AdminCampaignsPage() {
-  const [campaigns, setCampaigns] = useState<Campaign[]>([]);
   const [showNew, setShowNew] = useState(false);
   const [editId, setEditId] = useState<number | null>(null);
-  const [form, setForm] = useState({
-    name: '',
-    description: '',
-    loreRepoUrl: '',
-    theme: 'techno',
-    isHidden: false,
-    starMapConfig: '{}',
-  });
+  const [form, setForm] = useState(EMPTY_FORM);
   const router = useRouter();
 
-  async function fetchCampaigns() {
-    const res = await fetch('/api/campaigns');
-    return res.json();
-  }
-
-  async function load() {
-    setCampaigns(await fetchCampaigns());
-  }
-
-  useEffect(() => {
-    let ignore = false;
-    fetchCampaigns().then((data) => {
-      if (!ignore) setCampaigns(data);
-    });
-    return () => {
-      ignore = true;
-    };
-  }, []);
+  const fetchCampaigns = useCallback(
+    () => fetchJson<Campaign[]>('/api/campaigns'),
+    [],
+  );
+  const { data: campaigns, reload } = useAsyncData<Campaign[]>(
+    fetchCampaigns,
+    [],
+  );
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
-    const method = editId ? 'PUT' : 'POST';
     const body = editId ? { id: editId, ...form } : form;
-    await fetch('/api/campaigns', {
-      method,
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(body),
-    });
+    await requestJson('/api/campaigns', editId ? 'PUT' : 'POST', body);
     setShowNew(false);
     setEditId(null);
-    setForm({
-      name: '',
-      description: '',
-      loreRepoUrl: '',
-      theme: 'techno',
-      isHidden: false,
-      starMapConfig: '{}',
-    });
-    load();
+    setForm(EMPTY_FORM);
+    reload();
   }
 
   async function handleDelete(id: number) {
     if (!confirm('Delete this campaign?')) return;
-    await fetch('/api/campaigns', {
-      method: 'DELETE',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ id }),
-    });
-    load();
+    await requestJson('/api/campaigns', 'DELETE', { id });
+    reload();
   }
 
   function startEdit(c: Campaign) {
@@ -116,14 +93,7 @@ export default function AdminCampaignsPage() {
           onClick={() => {
             setShowNew(true);
             setEditId(null);
-            setForm({
-              name: '',
-              description: '',
-              loreRepoUrl: '',
-              theme: 'techno',
-              isHidden: false,
-              starMapConfig: '{}',
-            });
+            setForm(EMPTY_FORM);
           }}
         >
           New Campaign
