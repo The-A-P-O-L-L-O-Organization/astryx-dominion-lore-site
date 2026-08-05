@@ -2,7 +2,11 @@ import { db } from '@/lib/db';
 import { contentCache } from '@/lib/db/schema';
 import { eq, and, isNotNull } from 'drizzle-orm';
 import { requireCharacterAccess } from '@/lib/character-access';
-import type { CelestialBody, StarMapConfig } from '@/lib/starmap/types';
+import type {
+  CelestialBody,
+  StarMapConfig,
+  SurfaceMarker,
+} from '@/lib/starmap/types';
 import { StarmapClient } from './starmap-client';
 import { parseJsonOrDefault } from '@/lib/json';
 
@@ -17,7 +21,7 @@ interface PlanetData {
   belt_width?: number;
   belt_density?: number;
   parent_id?: string;
-  markers?: unknown[];
+  markers?: SurfaceMarker[];
 }
 
 export default async function StarmapPage({
