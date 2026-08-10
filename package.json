@@ -70,7 +70,7 @@
     "eslint": "^9.39.5",
     "eslint-config-next": "^16.2.12",
     "jsdom": "^30.0.1",
-    "postcss": "^8.4.0",
+    "postcss": "^8.5.26",
     "prettier": "^3.9.6",
     "tailwindcss": "^4.3.3",
     "tsx": "^4.7.0",
